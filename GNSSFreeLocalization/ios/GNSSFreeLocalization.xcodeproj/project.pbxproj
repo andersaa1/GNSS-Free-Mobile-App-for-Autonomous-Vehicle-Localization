@@ -118,6 +118,9 @@
 			dependencies = (
 			);
 			name = GNSSFreeLocalization;
+			packageProductDependencies = (
+				00E023227F71541F18D2425A /* MapLibre */,
+			);
 			productName = GNSSFreeLocalization;
 			productReference = 13B07F961A680F5B00A75B9A /* GNSSFreeLocalization.app */;
 			productType = "com.apple.product-type.application";
@@ -144,6 +147,9 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				EC039CE6C3B2251CC25D523B /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -475,6 +481,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EC039CE6C3B2251CC25D523B /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			requirement = {
+				kind = exactVersion;
+				version = 6.17.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		00E023227F71541F18D2425A /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC039CE6C3B2251CC25D523B /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
