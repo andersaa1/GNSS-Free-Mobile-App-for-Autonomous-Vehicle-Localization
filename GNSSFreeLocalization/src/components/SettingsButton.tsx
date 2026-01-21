@@ -1,17 +1,17 @@
 import React from 'react';
 import { StyleSheet, Image, Pressable } from 'react-native';
-import GearIcon from "../assets/icons/gear.png"
+import GearIcon from '../assets/icons/gear.png';
 
 type Props = {
-    onPress?: () => void;
-}
+  onPress?: () => void;
+};
 
 export default function SettingsButton({ onPress }: Props) {
-    return (
-        <Pressable style={styles.circleButton} onPress={onPress}> 
-            <Image source={GearIcon} style={styles.icon}/>
-        </Pressable>
-    );
+  return (
+    <Pressable style={styles.circleButton} onPress={onPress}>
+      <Image source={GearIcon} style={styles.icon} />
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({

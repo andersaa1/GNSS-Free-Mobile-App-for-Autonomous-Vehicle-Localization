@@ -1,10 +1,5 @@
 import React from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet,
-    Switch
-} from 'react-native';
+import { View, Text, StyleSheet, Switch } from 'react-native';
 import RGBSlider from './RGBSlider';
 import CustomSlider from './CustomSlider';
 
@@ -20,14 +15,14 @@ type Props = {
 };
 
 export default function SettingsOverlay({
-    showRoads,
-    onToggleRoads,
-    roadColor,
-    onChangeRoadColor,
-    roadWidth,
-    onChangeRoadWidth,
+  showRoads,
+  onToggleRoads,
+  roadColor,
+  onChangeRoadColor,
+  roadWidth,
+  onChangeRoadWidth,
 }: Props) {
-    const colorPreview = `rgb(${roadColor.r}, ${roadColor.g}, ${roadColor.b})`;
+  const colorPreview = `rgb(${roadColor.r}, ${roadColor.g}, ${roadColor.b})`;
 
   return (
     <View style={styles.container}>
@@ -38,32 +33,29 @@ export default function SettingsOverlay({
       {/* Show roads toggle */}
       <View style={styles.row}>
         <Text style={styles.label}>Highlight Roads</Text>
-        <Switch 
-          value={showRoads}
-          onValueChange={onToggleRoads}
-        />
-      </View> 
+        <Switch value={showRoads} onValueChange={onToggleRoads} />
+      </View>
 
       {/* Additional road settings when roads are highlighted */}
       {showRoads && (
-      <>
-      {/* Road color picker */}
-      <RGBSlider
-        label="Road Highlight Color"
-        color={roadColor}
-        onChangeColor={onChangeRoadColor}
-      />
+        <>
+          {/* Road color picker */}
+          <RGBSlider
+            label="Road Highlight Color"
+            color={roadColor}
+            onChangeColor={onChangeRoadColor}
+          />
 
-      {/* Road width slider */}
-      <CustomSlider
-        label="Road Highlight Width"
-        minimumValue={0.5}
-        maximumValue={5}
-        step={0.5}
-        value={roadWidth}
-        onChangeValue={onChangeRoadWidth}
-      />
-      </>
+          {/* Road width slider */}
+          <CustomSlider
+            label="Road Highlight Width"
+            minimumValue={0.5}
+            maximumValue={5}
+            step={0.5}
+            value={roadWidth}
+            onChangeValue={onChangeRoadWidth}
+          />
+        </>
       )}
     </View>
   );

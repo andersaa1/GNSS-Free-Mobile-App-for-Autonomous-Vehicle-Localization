@@ -18,7 +18,7 @@ function App() {
     );
   }
 
-  return <MapScreen roadsGeoJSON={roads}/>;
+  return <MapScreen roadsGeoJSON={roads} />;
 }
 
 export default App;

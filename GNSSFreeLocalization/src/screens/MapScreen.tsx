@@ -6,7 +6,7 @@ import SettingsOverlay from '../components/SettingsOverlay';
 
 type Props = {
   roadsGeoJSON: any;
-}
+};
 
 export default function MapScreen({ roadsGeoJSON }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -17,7 +17,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Map 
+      <Map
         roadsGeoJSON={roadsGeoJSON}
         showRoads={showRoads}
         roadColor={roadColor}
@@ -26,7 +26,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
 
       {/* HUD layer */}
       <View style={styles.overlayContainer}>
-        <SettingsButton onPress={() => setSettingsOpen(prev => !prev)}/>
+        <SettingsButton onPress={() => setSettingsOpen(prev => !prev)} />
       </View>
 
       {settingsOpen && (
@@ -34,7 +34,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
           showRoads={showRoads}
           onToggleRoads={setShowRoads}
           roadColor={roadColor}
-          onChangeRoadColor={(chan, value) => 
+          onChangeRoadColor={(chan, value) =>
             setRoadColor(prev => ({ ...prev, [chan]: value }))
           }
           roadWidth={roadWidth}
