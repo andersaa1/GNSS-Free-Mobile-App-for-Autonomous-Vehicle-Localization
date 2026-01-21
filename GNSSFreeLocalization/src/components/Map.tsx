@@ -8,9 +8,20 @@ import {
 
 type Props = {
   roadsGeoJSON: any;
+  showRoads: boolean;
+  roadColor: { r: number; g: number; b: number; };
+  roadWidth: number;
 }
 
-function MapComponent({ roadsGeoJSON }: Props) {
+function MapComponent({ 
+  roadsGeoJSON, 
+  showRoads, 
+  roadColor, 
+  roadWidth 
+}: Props) {
+  // Converts RGB to css string
+  const colorString = `rgba(${roadColor.r}, ${roadColor.g}, ${roadColor.b}, 0.9)`;
+
   return (
       <MapView 
         style={{ flex: 1 }}
@@ -30,15 +41,17 @@ function MapComponent({ roadsGeoJSON }: Props) {
         maxZoomLevel={19}
       />
       {/* Roads Layer */}
+      {showRoads && (
       <ShapeSource id="roads" shape={roadsGeoJSON}>
         <LineLayer
           id="road-lines"
           style={{
-            lineColor: '#ff0000',
-            lineWidth: 2,
+            lineColor: colorString,
+            lineWidth: roadWidth,
           }}
         />
       </ShapeSource>
+      )}
       </MapView>
   );
 }
@@ -46,7 +59,13 @@ function MapComponent({ roadsGeoJSON }: Props) {
 // Memorize the Map component to prevent unnecessary re-renders
 const Map = React.memo(
   MapComponent,
-  (prev, next) => prev.roadsGeoJSON === next.roadsGeoJSON
+  (prev, next) => 
+    prev.roadsGeoJSON === next.roadsGeoJSON &&
+    prev.showRoads === next.showRoads &&
+    prev.roadColor.r === next.roadColor.r &&
+    prev.roadColor.g === next.roadColor.g &&
+    prev.roadColor.b === next.roadColor.b &&
+    prev.roadWidth === next.roadWidth
 );
 
 export default Map;

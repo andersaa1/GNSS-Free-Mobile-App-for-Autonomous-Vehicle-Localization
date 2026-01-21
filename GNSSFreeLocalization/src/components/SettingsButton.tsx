@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, StyleSheet, TouchableOpacity, Image, Pressable} from 'react-native';
+import { StyleSheet, Image, Pressable } from 'react-native';
 import GearIcon from "../assets/icons/gear.png"
 
 type Props = {

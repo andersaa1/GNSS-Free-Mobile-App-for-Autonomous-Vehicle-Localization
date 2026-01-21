@@ -11,9 +11,18 @@ type Props = {
 export default function MapScreen({ roadsGeoJSON }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const [showRoads, setShowRoads] = useState(true);
+  const [roadColor, setRoadColor] = useState({ r: 255, g: 0, b: 0 });
+  const [roadWidth, setRoadWidth] = useState(2);
+
   return (
     <View style={{ flex: 1 }}>
-      <Map roadsGeoJSON={roadsGeoJSON}/>
+      <Map 
+        roadsGeoJSON={roadsGeoJSON}
+        showRoads={showRoads}
+        roadColor={roadColor}
+        roadWidth={roadWidth}
+      />
 
       {/* HUD layer */}
       <View style={styles.overlayContainer}>
@@ -21,7 +30,16 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
       </View>
 
       {settingsOpen && (
-        <SettingsOverlay/>
+        <SettingsOverlay
+          showRoads={showRoads}
+          onToggleRoads={setShowRoads}
+          roadColor={roadColor}
+          onChangeRoadColor={(chan, value) => 
+            setRoadColor(prev => ({ ...prev, [chan]: value }))
+          }
+          roadWidth={roadWidth}
+          onChangeRoadWidth={setRoadWidth}
+        />
       )}
     </View>
   );
