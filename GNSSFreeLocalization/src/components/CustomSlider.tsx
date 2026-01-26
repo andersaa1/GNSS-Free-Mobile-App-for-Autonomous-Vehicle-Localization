@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 
@@ -19,18 +19,25 @@ export default function CustomSlider({
   value,
   onChangeValue,
 }: Props) {
+  const [localValue, setLocalValue] = useState<number>(value);
+  
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);  
+
   return (
     <>
       <View style={styles.sliderGroup}>
         <Text style={styles.sliderLabel}>
-          {label} {value.toFixed(1)}
+          {label} {localValue.toFixed(1)}
         </Text>
         <Slider
           minimumValue={minimumValue}
           maximumValue={maximumValue}
           step={step}
-          value={value}
-          onValueChange={onChangeValue}
+          value={localValue}
+          onValueChange={setLocalValue}
+          onSlidingComplete={onChangeValue}
         />
       </View>
     </>

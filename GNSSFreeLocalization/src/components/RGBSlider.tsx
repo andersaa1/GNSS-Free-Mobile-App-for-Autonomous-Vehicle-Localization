@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 
@@ -7,11 +7,33 @@ type RGB = { r: number; g: number; b: number };
 type Props = {
   label: string;
   color: RGB;
-  onChangeColor: (channel: keyof RGB, value: number) => void;
+  onChangeColor: (color: RGB) => void;
 };
 
-export default function RGBSlider({ label, color, onChangeColor }: Props) {
-  const colorPreview = `rgb(${color.r}, ${color.g}, ${color.b})`;
+export default function RGBSlider({ 
+  label, 
+  color, 
+  onChangeColor 
+}: Props) {
+  const [localColor, setLocalColor] = useState<RGB>(color);
+
+  useEffect(() => {
+    setLocalColor(color);
+  }, [color])
+
+  // converts RGB to css string
+  const colorPreview = `rgb(${localColor.r}, ${localColor.g}, ${localColor.b})`;
+
+  const updateChannel = (channel: keyof RGB, value: number) => {
+    setLocalColor(prev => ({
+      ...prev,
+      [channel]: Math.round(value),
+    }));
+  };
+
+  const handleSlidingComplete = () => {
+    onChangeColor(localColor);
+  };
 
   return (
     <>
@@ -25,31 +47,37 @@ export default function RGBSlider({ label, color, onChangeColor }: Props) {
 
       {/* RGB sliders */}
       <View style={styles.sliderGroup}>
-        <Text style={styles.sliderLabel}>R: {color.r}</Text>
+        <Text style={styles.sliderLabel}>R: {localColor.r}</Text>
         <Slider
           minimumValue={0}
           maximumValue={255}
           step={1}
-          value={color.r}
-          onValueChange={value => onChangeColor('r', value)}
+          value={localColor.r}
+          minimumTrackTintColor="#ff0000"
+          onValueChange={value => updateChannel('r', value)}
+          onSlidingComplete={handleSlidingComplete}
         />
 
-        <Text style={styles.sliderLabel}>G: {color.g}</Text>
+        <Text style={styles.sliderLabel}>G: {localColor.g}</Text>
         <Slider
           minimumValue={0}
           maximumValue={255}
           step={1}
-          value={color.g}
-          onValueChange={value => onChangeColor('g', value)}
+          value={localColor.g}
+          minimumTrackTintColor="#00ff00ff"
+          onValueChange={value => updateChannel('g', value)}
+          onSlidingComplete={handleSlidingComplete}
         />
 
-        <Text style={styles.sliderLabel}>B: {color.b}</Text>
+        <Text style={styles.sliderLabel}>B: {localColor.b}</Text>
         <Slider
           minimumValue={0}
           maximumValue={255}
           step={1}
-          value={color.b}
-          onValueChange={value => onChangeColor('b', value)}
+          value={localColor.b}
+          minimumTrackTintColor="#0000ffff"
+          onValueChange={value => updateChannel('b', value)}
+          onSlidingComplete={handleSlidingComplete}
         />
       </View>
     </>
@@ -64,7 +92,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
   },
   colorPreview: {
     width: 32,
@@ -78,6 +105,5 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     fontSize: 14,
-    marginTop: 8,
   },
 });

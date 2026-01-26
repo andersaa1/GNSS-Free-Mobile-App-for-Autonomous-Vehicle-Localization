@@ -4,29 +4,44 @@ import {
   Camera,
   ShapeSource,
   LineLayer,
+  CircleLayer,
 } from '@maplibre/maplibre-react-native';
 
 type Props = {
+  // Data
   roadsGeoJSON: any;
+  particlesGeoJSON: any;
+  // Road display
   showRoads: boolean;
   roadColor: { r: number; g: number; b: number };
   roadWidth: number;
+  // Particles display
+  particlesColor: { r: number; g: number; b: number };
+  particlesRadius: number;
 };
 
 function MapComponent({
+  // Data
   roadsGeoJSON,
+  particlesGeoJSON,
+  // Road display
   showRoads,
   roadColor,
   roadWidth,
+  // Particles display
+  particlesColor,
+  particlesRadius
 }: Props) {
   // Converts RGB to css string
-  const colorString = `rgba(${roadColor.r}, ${roadColor.g}, ${roadColor.b}, 0.9)`;
+  const roadColorString = `rgba(${roadColor.r}, ${roadColor.g}, ${roadColor.b})`;
+  const particlesColorString = `rgba(${particlesColor.r}, ${particlesColor.g}, ${particlesColor.b})`;
 
   return (
     <MapView
       style={{ flex: 1 }}
       mapStyle="https://tiles.openfreemap.org/styles/liberty" // OpenFreeMap Liberty style
     >
+
       {/* Camera settings */}
       <Camera
         defaultSettings={{
@@ -40,13 +55,27 @@ function MapComponent({
         minZoomLevel={7}
         maxZoomLevel={19}
       />
+
+      {/* Particles Layer */}
+      {particlesGeoJSON && (
+        <ShapeSource id="particles" shape={particlesGeoJSON}>
+          <CircleLayer
+            id="particles"
+            style={{
+              circleRadius: particlesRadius,
+              circleColor: particlesColorString,
+            }}
+          />
+        </ShapeSource>
+      )}
+
       {/* Roads Layer */}
       {showRoads && (
         <ShapeSource id="roads" shape={roadsGeoJSON}>
           <LineLayer
             id="road-lines"
             style={{
-              lineColor: colorString,
+              lineColor: roadColorString,
               lineWidth: roadWidth,
             }}
           />
@@ -61,11 +90,16 @@ const Map = React.memo(
   MapComponent,
   (prev, next) =>
     prev.roadsGeoJSON === next.roadsGeoJSON &&
+    prev.particlesGeoJSON === next.particlesGeoJSON &&
     prev.showRoads === next.showRoads &&
     prev.roadColor.r === next.roadColor.r &&
     prev.roadColor.g === next.roadColor.g &&
     prev.roadColor.b === next.roadColor.b &&
-    prev.roadWidth === next.roadWidth,
+    prev.roadWidth === next.roadWidth &&
+    prev.particlesColor.r === next.particlesColor.r &&
+    prev.particlesColor.g === next.particlesColor.g &&
+    prev.particlesColor.b === next.particlesColor.b &&
+    prev.particlesRadius === next.particlesRadius
 );
 
 export default Map;
