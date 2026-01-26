@@ -30,7 +30,7 @@ function MapComponent({
   roadWidth,
   // Particles display
   particlesColor,
-  particlesRadius
+  particlesRadius,
 }: Props) {
   // Converts RGB to css string
   const roadColorString = `rgba(${roadColor.r}, ${roadColor.g}, ${roadColor.b})`;
@@ -41,7 +41,6 @@ function MapComponent({
       style={{ flex: 1 }}
       mapStyle="https://tiles.openfreemap.org/styles/liberty" // OpenFreeMap Liberty style
     >
-
       {/* Camera settings */}
       <Camera
         defaultSettings={{
@@ -99,7 +98,7 @@ const Map = React.memo(
     prev.particlesColor.r === next.particlesColor.r &&
     prev.particlesColor.g === next.particlesColor.g &&
     prev.particlesColor.b === next.particlesColor.b &&
-    prev.particlesRadius === next.particlesRadius
+    prev.particlesRadius === next.particlesRadius,
 );
 
 export default Map;

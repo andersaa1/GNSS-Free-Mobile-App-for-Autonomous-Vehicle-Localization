@@ -15,10 +15,13 @@ type Props = {
   onChangeRoadWidth: (value: number) => void;
   // Particle display settings and handler
   onGenerateParticles: () => void;
+  isGeneratingParticles: boolean;
   particlesColor: RGB;
   onChangeParticlesColor: (value: RGB) => void;
   particlesRadius: number;
   onChangeParticlesRadius: (value: number) => void;
+  particleCount: number;
+  onChangeParticleCount: (value: number) => void;
 };
 
 export default function SettingsOverlay({
@@ -31,10 +34,13 @@ export default function SettingsOverlay({
   onChangeRoadWidth,
   // Particles display settings and handler
   onGenerateParticles,
+  isGeneratingParticles,
   particlesColor,
   onChangeParticlesColor,
   particlesRadius,
-  onChangeParticlesRadius
+  onChangeParticlesRadius,
+  particleCount,
+  onChangeParticleCount,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -42,67 +48,77 @@ export default function SettingsOverlay({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings & Tools</Text>
-      </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>Settings & Tools</Text>
+        </View>
 
-      {/* START OF ROAD SETTINGS */}
-      <View style={styles.header}>
-        <Text style={styles.title2}>Road Settings</Text>
-      </View>
+        {/* START OF ROAD SETTINGS */}
+        <View style={styles.header}>
+          <Text style={styles.title2}>Road Settings</Text>
+        </View>
 
-      {/* Show roads toggle */}
-      <View style={styles.row}>
-        <Text style={styles.label}>Highlight Roads</Text>
-        <Switch value={showRoads} onValueChange={onToggleRoads} />
-      </View>
+        {/* Show roads toggle */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Highlight Roads</Text>
+          <Switch value={showRoads} onValueChange={onToggleRoads} />
+        </View>
 
-      {/* Additional road settings when roads are highlighted */}
-      {showRoads && (
-        <>
-          {/* Road color picker */}
-          <RGBSlider
-            label="Road Highlight Color"
-            color={roadColor}
-            onChangeColor={onChangeRoadColor}
-          />
-          {/* Road width slider */}
-          <CustomSlider
-            label="Road Highlight Width"
-            minimumValue={0.5}
-            maximumValue={5}
-            step={0.5}
-            value={roadWidth}
-            onChangeValue={onChangeRoadWidth}
-          />
-        </>
-      )}
+        {/* Additional road settings when roads are highlighted */}
+        {showRoads && (
+          <>
+            {/* Road color picker */}
+            <RGBSlider
+              label="Road Highlight Color"
+              color={roadColor}
+              onChangeColor={onChangeRoadColor}
+            />
+            {/* Road width slider */}
+            <CustomSlider
+              label="Road Highlight Width:"
+              minimumValue={0.5}
+              maximumValue={5}
+              step={0.5}
+              value={roadWidth}
+              onChangeValue={onChangeRoadWidth}
+            />
+          </>
+        )}
 
-      {/* START OF PARTICLE SETTINGS */}
-      <View style={styles.header}>
-        <Text style={styles.title2}>Particle Settings</Text>
-      </View>
+        {/* START OF PARTICLE SETTINGS */}
+        <View style={styles.header}>
+          <Text style={styles.title2}>Particle Settings</Text>
+        </View>
 
-      {/* Particle color picker */}
-      <RGBSlider
-        label="Particle Color"
-        color={particlesColor}
-        onChangeColor={onChangeParticlesColor}
-      />
-      {/* Particle radius slider */}
-      <CustomSlider
-        label="Particle Radius"
-        minimumValue={1}
-        maximumValue={10}
-        step={1}
-        value={particlesRadius}
-        onChangeValue={onChangeParticlesRadius}
-      />
-      {/* Generate random particles button */}
-      <CustomButton
-        label="Generate Random Particles"
-        onButtonPressed={onGenerateParticles}
-      />
+        {/* Particle color picker */}
+        <RGBSlider
+          label="Particle Color"
+          color={particlesColor}
+          onChangeColor={onChangeParticlesColor}
+        />
+        {/* Particle radius slider */}
+        <CustomSlider
+          label="Particle Radius:"
+          minimumValue={1}
+          maximumValue={10}
+          step={1}
+          value={particlesRadius}
+          onChangeValue={onChangeParticlesRadius}
+        />
+        {/* Ammount of particles to render slider */}
+        <CustomSlider
+          label="Ammount of Particles:"
+          minimumValue={50}
+          maximumValue={500}
+          step={50}
+          value={particleCount}
+          onChangeValue={onChangeParticleCount}
+        />
+        {/* Generate random particles button */}
+        <CustomButton
+          label="Sample Random Particles"
+          onButtonPressed={onGenerateParticles}
+          disabled={isGeneratingParticles}
+        />
       </ScrollView>
     </View>
   );
@@ -126,7 +142,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-    paddingTop: 20
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',
@@ -163,5 +179,5 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontWeight: '600',
-  }
+  },
 });

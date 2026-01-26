@@ -23,9 +23,10 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
 
   // Particle display settings
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [isGeneratingParticles, setIsGeneratingParticles] = useState(false);
   const [particlesColor, setParticlesColor] = useState({ r: 0, g: 0, b: 255 });
   const [particlesRadius, setParticlesRadius] = useState(4);
-
+  const [particleCount, setParticleCount] = useState(200);
 
   // Convert particles to GeoJSON
   const particlesGeoJSON = useMemo(() => {
@@ -48,9 +49,16 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   }, [particles]);
 
   // Handler to generate random particles
-  const generateParticles = () => {
-    const sampledParticles = sampleRandomParticles(roadsGeoJSON, 200);
+  const generateParticles = async () => {
+    if (isGeneratingParticles) return; // Prevents simultaneous calls
+
+    setIsGeneratingParticles(true);
+    await new Promise(resolve => setTimeout(() => resolve(undefined), 0));
+
+    const sampledParticles = sampleRandomParticles(roadsGeoJSON, particleCount);
     setParticles(sampledParticles);
+
+    setIsGeneratingParticles(false);
   };
 
   return (
@@ -84,10 +92,13 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
           onChangeRoadWidth={setRoadWidth}
           onGenerateParticles={generateParticles}
           // Particles display settings
+          isGeneratingParticles={isGeneratingParticles}
           particlesColor={particlesColor}
           onChangeParticlesColor={setParticlesColor}
           particlesRadius={particlesRadius}
           onChangeParticlesRadius={setParticlesRadius}
+          particleCount={particleCount}
+          onChangeParticleCount={setParticleCount}
         />
       )}
     </View>

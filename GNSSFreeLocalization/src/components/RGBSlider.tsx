@@ -10,16 +10,12 @@ type Props = {
   onChangeColor: (color: RGB) => void;
 };
 
-export default function RGBSlider({ 
-  label, 
-  color, 
-  onChangeColor 
-}: Props) {
+export default function RGBSlider({ label, color, onChangeColor }: Props) {
   const [localColor, setLocalColor] = useState<RGB>(color);
 
   useEffect(() => {
     setLocalColor(color);
-  }, [color])
+  }, [color]);
 
   // converts RGB to css string
   const colorPreview = `rgb(${localColor.r}, ${localColor.g}, ${localColor.b})`;

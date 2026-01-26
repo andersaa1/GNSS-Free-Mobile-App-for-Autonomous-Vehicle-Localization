@@ -20,10 +20,10 @@ export default function CustomSlider({
   onChangeValue,
 }: Props) {
   const [localValue, setLocalValue] = useState<number>(value);
-  
+
   useEffect(() => {
     setLocalValue(value);
-  }, [value]);  
+  }, [value]);
 
   return (
     <>
