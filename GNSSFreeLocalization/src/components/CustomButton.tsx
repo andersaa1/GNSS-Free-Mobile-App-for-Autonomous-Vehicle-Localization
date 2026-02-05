@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     width: '100%',
     height: 40,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#005BBB',
     flexDirection: 'row',
     justifyContent: 'center',

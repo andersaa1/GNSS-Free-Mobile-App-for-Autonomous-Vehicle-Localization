@@ -1,10 +1,24 @@
 {
-  "name": "GNSSFreeLocalization",
+  "name": "gnss-free-mobile-app-for-autonomous-vehicle-localization",
   "version": "0.0.1",
   "private": true,
+  "description": "Thesis project: mobile app for localizing self-driving vehicles without GNSS.",
+  "author": "Ander Saarniit",
+  "license": "ISC",
+  "keywords": ["react-native", "GNSS-free localization", "particle filter"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andersaa1/gnss-free-mobile-app-for-autonomous-vehicle-localization.git"
+  },
+  "bugs": {
+    "url": "https://github.com/andersaa1/GNSS-Free-Mobile-App-for-Autonomous-Vehicle-Localization/issues"
+  },
+  "homepage": "https://github.com/andersaa1/gnss-free-mobile-app-for-autonomous-vehicle-localization#readme",
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios --simulator=\"iPhone 16e\"",
+    "ios:device": "react-native run-ios --device",
+    "xcode": "open ios/*.xcworkspace",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
@@ -18,15 +32,16 @@
     "react": "19.2.0",
     "react-native": "0.83.1",
     "react-native-fs": "^2.20.0",
+    "react-native-geolocation-service": "^5.3.1",
     "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
-    "@react-native-community/cli": "20.0.0",
-    "@react-native-community/cli-platform-android": "20.0.0",
-    "@react-native-community/cli-platform-ios": "20.0.0",
+    "@react-native-community/cli": "^14.0.1",
+    "@react-native-community/cli-platform-android": "^15.1.0",
+    "@react-native-community/cli-platform-ios": "^14.0.1",
     "@react-native/babel-preset": "0.83.1",
     "@react-native/eslint-config": "0.83.1",
     "@react-native/metro-config": "0.83.1",
@@ -39,6 +54,9 @@
     "prettier": "2.8.8",
     "react-test-renderer": "19.2.0",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "fast-xml-parser": "5.3.4"
   },
   "engines": {
     "node": ">=20"

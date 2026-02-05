@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import MapScreen from './src/screens/MapScreen';
 import { bootstrapRoads } from './src/app/bootstrapRoads';

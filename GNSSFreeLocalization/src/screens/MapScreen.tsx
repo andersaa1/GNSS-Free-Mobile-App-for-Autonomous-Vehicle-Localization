@@ -17,7 +17,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Road display settings
-  const [showRoads, setShowRoads] = useState(true);
+  const [showRoads, setShowRoads] = useState(false);
   const [roadColor, setRoadColor] = useState({ r: 255, g: 0, b: 0 });
   const [roadWidth, setRoadWidth] = useState(2);
 
@@ -53,6 +53,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
     if (isGeneratingParticles) return; // Prevents simultaneous calls
 
     setIsGeneratingParticles(true);
+    // Waits one tick to ensure UI updates before heavy computation
     await new Promise(resolve => setTimeout(() => resolve(undefined), 0));
 
     const sampledParticles = sampleRandomParticles(roadsGeoJSON, particleCount);
