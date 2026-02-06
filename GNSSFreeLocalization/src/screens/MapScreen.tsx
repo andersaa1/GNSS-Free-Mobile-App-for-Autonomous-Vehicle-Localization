@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
@@ -7,6 +7,7 @@ import {
   Particle,
   sampleRandomParticles
 } from '../services/particleFilter';
+import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
 
 type Props = {
   roadsGeoJSON: any;
@@ -62,11 +63,24 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
     setIsGeneratingParticles(false);
   };
 
+  useEffect(() => {
+    const unsub = onGpsFix((fix) => {
+      console.log("GPS fix:", fix.lat, fix.lon);
+    });
+
+      startGps().catch(console.error);
+
+      return () => {
+        unsub();
+        stopGps();
+      };
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <Map
-        // Daya
-        roadsGeoJSON={roadsGeoJSON}
+        // Data
+        roadsGeoJSON={null} // Disable if memory issues (this is mainly for debugging)
         particlesGeoJSON={particlesGeoJSON}
         // Road display
         showRoads={showRoads}

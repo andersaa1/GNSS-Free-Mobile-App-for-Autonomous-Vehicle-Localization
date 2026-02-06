@@ -1,5 +1,5 @@
-import roads from '../assets/data/estonia-roads.json';
+//import roads from '../assets/data/estonia-roads.json';
 
-export async function bootstrapRoads() {
-  return roads;
-}
+//export async function bootstrapRoads() {
+//  return roads;
+//}

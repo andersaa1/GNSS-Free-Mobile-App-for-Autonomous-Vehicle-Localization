@@ -17,11 +17,10 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios --simulator=\"iPhone 16e\"",
-    "ios:device": "react-native run-ios --device",
+    "ios:device": "npx react-native run-ios --device",
     "xcode": "open ios/*.xcworkspace",
     "lint": "eslint .",
-    "start": "react-native start",
-    "test": "jest"
+    "start": "react-native start"
   },
   "dependencies": {
     "@maplibre/maplibre-react-native": "^10.4.2",
