@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"highway":"service","service":"driveway","tracktype":"grade1"},"geometry":{"type":"LineString","coordinates":[[27.2365236,58.3206076],[27.2369655,58.3204571],[27.2374793,58.3202003]]}}]}
