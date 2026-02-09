@@ -27,7 +27,7 @@ function segmentsFromFeatureCollection(fc: any): Segment[] {
 }
 
 export class RoadTileSampler {
-  private bundleRoot = `${RNFS.MainBundlePath}/road_tiles`;
+  private bundleRoot = `${RNFS.MainBundlePath}/tiles/road_tiles`;
   private index: TileIndex | null = null;
 
   private cumW: number[] = []; // prefix sums aligned to index.tiles

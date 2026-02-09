@@ -7,14 +7,23 @@ import { Particle, sampleRandomParticles } from '../services/particleFilter';
 import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
 import { RoadTileCache } from "../services/roads/roadTiles";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
+import {
+  loadBaseLibertyStyle,
+  buildStyleWithRoadOverrides,
+  patchLibertyToLocalEstoniaTiles,
+  getBundledEstoniaTilesTemplate,
+  addBackgroundLandOceanAndCountryLabels,
+  getBundledBackgroundTilesTemplate
+} from "../services/maps/style";
 
-import RNFS from "react-native-fs"; // temporary
 
 type Props = {
   roadsGeoJSON: any;
 };
 
 export default function MapScreen({ roadsGeoJSON }: Props) {
+  const [baseStyle, setBaseStyle] = useState<any | null>(null);
+
   const samplerRef = useRef(new RoadTileSampler());
   const tileCacheRef = useRef(new RoadTileCache());
   const [roadsForDebug, setRoadsForDebug] = useState<any>(null);
@@ -33,6 +42,32 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   const [particlesColor, setParticlesColor] = useState({ r: 0, g: 0, b: 255 });
   const [particlesRadius, setParticlesRadius] = useState(4);
   const [particleCount, setParticleCount] = useState(200);
+
+  useEffect(() => {
+    (async () => {
+      const liberty = await loadBaseLibertyStyle();
+
+      // 1) Estonia detailed tiles (OpenMapTiles Estonia build)
+      const estTiles = getBundledEstoniaTilesTemplate();
+      const withEstonia = patchLibertyToLocalEstoniaTiles(liberty, estTiles);
+
+      // 2) Background tiles (Natural Earth land/ocean + country labels)
+      const bgTiles = getBundledBackgroundTilesTemplate();
+      const withBackground = addBackgroundLandOceanAndCountryLabels(withEstonia, bgTiles);
+
+      setBaseStyle(withBackground);
+    })().catch(console.error);
+  }, []);
+
+
+  const mapStyle = useMemo(() => {
+    if (!baseStyle) return "https://tiles.openfreemap.org/styles/liberty";
+    return buildStyleWithRoadOverrides(baseStyle, {
+      highlightRoads: showRoads,
+      roadColor,
+      roadWidth,
+    });
+  }, [baseStyle, showRoads, roadColor.r, roadColor.g, roadColor.b, roadWidth]);
 
   // Convert particles to GeoJSON
   const particlesGeoJSON = useMemo(() => {
@@ -80,18 +115,6 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   }
 };
 
-  useEffect(() => {
-    (async () => {
-      const base = `${RNFS.MainBundlePath}/road_tiles/12`;
-      const exists = await RNFS.exists(base);
-      console.log("Tiles base exists:", base, exists);
-      if (exists) {
-        const xs = await RNFS.readDir(base);
-        console.log("Some x dirs:", xs.slice(0, 3).map(x => x.name));
-      }
-    })();
-  }, []);
-
   // When toggling showRoads on, materialize debug geojson once
   useEffect(() => {
     if (showRoads) setRoadsForDebug(tileCacheRef.current.getMergedGeoJSON());
@@ -120,14 +143,10 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   return (
     <View style={{ flex: 1 }}>
       <Map
-        // Data
-        roadsGeoJSON={roadsForDebug} // Disable if memory issues (this is mainly for debugging)
+        // Map
+        mapStyle={mapStyle}
+        // Particles
         particlesGeoJSON={particlesGeoJSON}
-        // Road display
-        showRoads={showRoads}
-        roadColor={roadColor}
-        roadWidth={roadWidth}
-        // Particles display
         particlesColor={particlesColor}
         particlesRadius={particlesRadius}
       />

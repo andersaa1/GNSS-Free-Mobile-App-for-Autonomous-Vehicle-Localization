@@ -1,45 +1,31 @@
-import React from 'react';
-import {
-  MapView,
-  Camera,
-  ShapeSource,
-  LineLayer,
-  CircleLayer,
-} from '@maplibre/maplibre-react-native';
+import React from "react";
+import { MapView, Camera, ShapeSource, LineLayer, CircleLayer } from '@maplibre/maplibre-react-native';
+import { buildStyleWithRoadOverrides, loadBaseLibertyStyle } from "../services/maps/style";
 
 type Props = {
-  // Data
-  roadsGeoJSON: any;
+  // Map style
+  mapStyle: any;
+  // Particles
   particlesGeoJSON: any;
-  // Road display
-  showRoads: boolean;
-  roadColor: { r: number; g: number; b: number };
-  roadWidth: number;
-  // Particles display
   particlesColor: { r: number; g: number; b: number };
   particlesRadius: number;
 };
 
 function MapComponent({
-  // Data
-  roadsGeoJSON,
+  // Map style
+  mapStyle,
+  // Particles
   particlesGeoJSON,
-  // Road display
-  showRoads,
-  roadColor,
-  roadWidth,
-  // Particles display
   particlesColor,
   particlesRadius,
 }: Props) {
   // Converts RGB to css string
-  const roadColorString = `rgba(${roadColor.r}, ${roadColor.g}, ${roadColor.b})`;
   const particlesColorString = `rgba(${particlesColor.r}, ${particlesColor.g}, ${particlesColor.b})`;
 
   return (
     <MapView
       style={{ flex: 1 }}
-      mapStyle="https://tiles.openfreemap.org/styles/liberty" // OpenFreeMap Liberty style
+      mapStyle={mapStyle} // OpenFreeMap Liberty style
     >
       {/* Camera settings */}
       <Camera
@@ -67,19 +53,6 @@ function MapComponent({
           />
         </ShapeSource>
       )}
-
-      {/* Roads Layer */}
-      {showRoads && roadsGeoJSON && (
-        <ShapeSource id="roads" shape={roadsGeoJSON}>
-          <LineLayer
-            id="road-lines"
-            style={{
-              lineColor: roadColorString,
-              lineWidth: roadWidth,
-            }}
-          />
-        </ShapeSource>
-      )}
     </MapView>
   );
 }
@@ -88,13 +61,8 @@ function MapComponent({
 const Map = React.memo(
   MapComponent,
   (prev, next) =>
-    prev.roadsGeoJSON === next.roadsGeoJSON &&
+    prev.mapStyle === next.mapStyle &&
     prev.particlesGeoJSON === next.particlesGeoJSON &&
-    prev.showRoads === next.showRoads &&
-    prev.roadColor.r === next.roadColor.r &&
-    prev.roadColor.g === next.roadColor.g &&
-    prev.roadColor.b === next.roadColor.b &&
-    prev.roadWidth === next.roadWidth &&
     prev.particlesColor.r === next.particlesColor.r &&
     prev.particlesColor.g === next.particlesColor.g &&
     prev.particlesColor.b === next.particlesColor.b &&

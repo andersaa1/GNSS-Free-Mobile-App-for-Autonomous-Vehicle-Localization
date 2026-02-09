@@ -24,7 +24,7 @@ export class RoadTileCache {
   private cache = new Map<string, FeatureCollection>();
 
   // iOS bundle path: <MainBundlePath>/road_tiles/12/x/y.json (after you add to bundle resources)
-  private bundleRoot = `${RNFS.MainBundlePath}/road_tiles`;
+  private bundleRoot = `${RNFS.MainBundlePath}/tiles/road_tiles`;
 
   async loadTile(z: number, x: number, y: number): Promise<FeatureCollection | null> {
     const key = tileKey(z, x, y);
