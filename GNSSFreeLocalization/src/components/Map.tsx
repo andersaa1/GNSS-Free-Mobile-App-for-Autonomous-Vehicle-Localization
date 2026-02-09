@@ -69,7 +69,7 @@ function MapComponent({
       )}
 
       {/* Roads Layer */}
-      {showRoads && (
+      {showRoads && roadsGeoJSON && (
         <ShapeSource id="roads" shape={roadsGeoJSON}>
           <LineLayer
             id="road-lines"

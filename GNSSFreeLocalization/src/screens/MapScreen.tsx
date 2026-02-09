@@ -1,19 +1,24 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
-import {
-  Particle,
-  sampleRandomParticles
-} from '../services/particleFilter';
+import { Particle, sampleRandomParticles } from '../services/particleFilter';
 import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
+import { RoadTileCache } from "../services/roads/roadTiles";
+import { RoadTileSampler } from "../services/roads/roadTileSampler";
+
+import RNFS from "react-native-fs"; // temporary
 
 type Props = {
   roadsGeoJSON: any;
 };
 
 export default function MapScreen({ roadsGeoJSON }: Props) {
+  const samplerRef = useRef(new RoadTileSampler());
+  const tileCacheRef = useRef(new RoadTileCache());
+  const [roadsForDebug, setRoadsForDebug] = useState<any>(null);
+
   // Settings overlay state
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -51,36 +56,72 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
 
   // Handler to generate random particles
   const generateParticles = async () => {
-    if (isGeneratingParticles) return; // Prevents simultaneous calls
+  if (isGeneratingParticles) return;
 
-    setIsGeneratingParticles(true);
-    // Waits one tick to ensure UI updates before heavy computation
-    await new Promise(resolve => setTimeout(() => resolve(undefined), 0));
+  setIsGeneratingParticles(true);
+  await new Promise(r => setTimeout(() => r(undefined), 0));
 
-    const sampledParticles = sampleRandomParticles(roadsGeoJSON, particleCount);
+  try {
+    const pts = await samplerRef.current.sampleGlobalParticles(particleCount);
+
+    const n = pts.length || 1;
+    const sampledParticles: Particle[] = pts.map((p, i) => ({
+      id: i,
+      x: p.lon,
+      y: p.lat,
+      weight: 1 / n,
+    }));
+
     setParticles(sampledParticles);
-
+  } catch (e) {
+    console.error("Particle generation failed:", e);
+  } finally {
     setIsGeneratingParticles(false);
-  };
+  }
+};
 
   useEffect(() => {
-    const unsub = onGpsFix((fix) => {
+    (async () => {
+      const base = `${RNFS.MainBundlePath}/road_tiles/12`;
+      const exists = await RNFS.exists(base);
+      console.log("Tiles base exists:", base, exists);
+      if (exists) {
+        const xs = await RNFS.readDir(base);
+        console.log("Some x dirs:", xs.slice(0, 3).map(x => x.name));
+      }
+    })();
+  }, []);
+
+  // When toggling showRoads on, materialize debug geojson once
+  useEffect(() => {
+    if (showRoads) setRoadsForDebug(tileCacheRef.current.getMergedGeoJSON());
+    else setRoadsForDebug(null);
+  }, [showRoads])
+
+  useEffect(() => {
+    const unsub = onGpsFix(async (fix) => {
+      await tileCacheRef.current.loadAround(fix.lon, fix.lat);
       console.log("GPS fix:", fix.lat, fix.lon);
+
+      if (showRoads) {
+        setRoadsForDebug(tileCacheRef.current.getMergedGeoJSON());
+      }
     });
 
       startGps().catch(console.error);
+      return () => { unsub(); stopGps(); };
+  }, []);
 
-      return () => {
-        unsub();
-        stopGps();
-      };
+  useEffect(() => {
+    // Load tiles around Estonia center immediately so buttons work even before GPS fix
+    tileCacheRef.current.loadAround(25.0, 58.6).catch(console.error);
   }, []);
 
   return (
     <View style={{ flex: 1 }}>
       <Map
         // Data
-        roadsGeoJSON={null} // Disable if memory issues (this is mainly for debugging)
+        roadsGeoJSON={roadsForDebug} // Disable if memory issues (this is mainly for debugging)
         particlesGeoJSON={particlesGeoJSON}
         // Road display
         showRoads={showRoads}
