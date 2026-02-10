@@ -1,6 +1,5 @@
 import React from "react";
-import { MapView, Camera, ShapeSource, LineLayer, CircleLayer } from '@maplibre/maplibre-react-native';
-import { buildStyleWithRoadOverrides, loadBaseLibertyStyle } from "../services/maps/style";
+import { MapView, Camera, ShapeSource, CircleLayer } from '@maplibre/maplibre-react-native';
 
 type Props = {
   // Map style
@@ -33,11 +32,11 @@ function MapComponent({
           centerCoordinate: [25.0, 58.6],
           zoomLevel: 7,
         }}
-        maxBounds={{
-          ne: [28.2, 59.8],
-          sw: [21.5, 57.4],
+        maxBounds={{         // relative to screen:
+          ne: [27.9, 59.4],  // RIGHT |  TOP 
+          sw: [21.5, 57.8],  // LEFT  |  BOTTOM
         }}
-        minZoomLevel={7}
+        minZoomLevel={6.5}
         maxZoomLevel={19}
       />
 

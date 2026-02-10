@@ -12,8 +12,6 @@ import {
   buildStyleWithRoadOverrides,
   patchLibertyToLocalEstoniaTiles,
   getBundledEstoniaTilesTemplate,
-  addBackgroundLandOceanAndCountryLabels,
-  getBundledBackgroundTilesTemplate
 } from "../services/maps/style";
 
 
@@ -51,11 +49,7 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
       const estTiles = getBundledEstoniaTilesTemplate();
       const withEstonia = patchLibertyToLocalEstoniaTiles(liberty, estTiles);
 
-      // 2) Background tiles (Natural Earth land/ocean + country labels)
-      const bgTiles = getBundledBackgroundTilesTemplate();
-      const withBackground = addBackgroundLandOceanAndCountryLabels(withEstonia, bgTiles);
-
-      setBaseStyle(withBackground);
+      setBaseStyle(withEstonia);
     })().catch(console.error);
   }, []);
 

@@ -11,10 +11,6 @@ export function getBundledEstoniaTilesTemplate() {
   return `file://${RNFS.MainBundlePath}/tiles/map_tiles/estonia/{z}/{x}/{y}.pbf`;
 }
 
-export function getBundledBackgroundTilesTemplate() {
-  return `file://${RNFS.MainBundlePath}/tiles/background_tiles/background/{z}/{x}/{y}.pbf`;
-}
-
 export function patchLibertyToLocalEstoniaTiles(base: StyleJSON, tilesTemplate: string) {
   const style = JSON.parse(JSON.stringify(base));
 
@@ -165,58 +161,4 @@ export function buildStyleWithRoadOverrides(
   }
 
   return style;
-}
-
-export function addBackgroundLandOceanAndCountryLabels(style: any, backgroundTilesTemplate: string) {
-  const s = JSON.parse(JSON.stringify(style));
-
-  // 1) add background source
-  s.sources = s.sources ?? {};
-  s.sources.background = {
-    type: "vector",
-    tiles: [backgroundTilesTemplate],
-    minzoom: 0,
-    maxzoom: 7,
-  };
-
-  // 2) create background layers (very simple)
-  const bgOcean = {
-    id: "bg-ocean",
-    type: "fill",
-    source: "background",
-    "source-layer": "ocean",
-    paint: { "fill-color": "#a0c8f0" }, // you can change later
-  };
-
-  const bgLand = {
-    id: "bg-land",
-    type: "fill",
-    source: "background",
-    "source-layer": "land",
-    paint: { "fill-color": "#e7e3d6" },
-  };
-
-  const bgCountryLabels = {
-    id: "bg-country-labels",
-    type: "symbol",
-    source: "background",
-    "source-layer": "country_labels",
-    layout: {
-      "text-field": ["get", "name"],
-      "text-size": 12,
-      "text-font": ["Noto Sans Regular"], // matches Liberty-ish; can tweak
-      "text-allow-overlap": false,
-    },
-    paint: {
-      "text-color": "#2b2b2b",
-      "text-halo-color": "#ffffff",
-      "text-halo-width": 1,
-    },
-  };
-
-  // 3) Place bg ocean/land at bottom; labels above them.
-  // Put them BEFORE existing layers so Estonia details draw above.
-  s.layers = [bgOcean, bgLand, bgCountryLabels, ...(s.layers ?? [])];
-
-  return s;
 }
