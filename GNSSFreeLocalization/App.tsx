@@ -1,24 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import MapScreen from './src/screens/MapScreen';
-//import { bootstrapRoads } from './src/app/bootstrapRoads';
+import loadStyle from './src/app/loadBaseStyle'
 
 function App() {
-  const [roads, setRoads] = useState<any>(null);
+  const [baseStyle, setBaseStyle] = useState<any>(null);
 
-  //useEffect(() => {
-  //  bootstrapRoads().then(setRoads);
-  //}, []);
+  // loads the style
+  useEffect(() => {
+    loadStyle().then(setBaseStyle);
+  }, []);
 
-  //if (!roads) {
-  //  return (
-  //    (<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>)
-  //      (<ActivityIndicator size="large" />)
-  //    (</View>)
-  //  );
-  //}
+  // if still waiting for style, show a loading screen
+  if (!baseStyle) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large"/>
+        <Text style={{ paddingTop: 20 }}>loading map style...</Text>
+      </View>
+    );
+  }
 
-  return <MapScreen roadsGeoJSON={roads} />;
+  return <MapScreen style={baseStyle}/>;
 }
 
 export default App;

@@ -52,9 +52,9 @@ export default function SettingsOverlay({
           <Text style={styles.title}>Settings & Tools</Text>
         </View>
 
-        {/* START OF ROAD SETTINGS */}
+        {/* START OF MAP SETTINGS */}
         <View style={styles.header}>
-          <Text style={styles.title2}>Road Settings</Text>
+          <Text style={styles.title2}>Map Settings</Text>
         </View>
 
         {/* Show roads toggle */}

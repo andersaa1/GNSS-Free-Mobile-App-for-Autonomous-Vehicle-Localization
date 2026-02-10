@@ -3,28 +3,18 @@ import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
-import { Particle, sampleRandomParticles } from '../services/particleFilter';
+import { Particle } from '../services/particleFilter';
 import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
 import { RoadTileCache } from "../services/roads/roadTiles";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
-import {
-  loadBaseLibertyStyle,
-  buildStyleWithRoadOverrides,
-  patchLibertyToLocalEstoniaTiles,
-  getBundledEstoniaTilesTemplate,
-} from "../services/maps/style";
+import { buildStyleWithRoadOverrides } from "../services/maps/style";
 
-
-type Props = {
-  roadsGeoJSON: any;
-};
-
-export default function MapScreen({ roadsGeoJSON }: Props) {
-  const [baseStyle, setBaseStyle] = useState<any | null>(null);
+export default function MapScreen({ style }: {style: any}) {
+  // Map base style (before any custom options)
+  const [baseStyle, setBaseStyle] = useState(style);
 
   const samplerRef = useRef(new RoadTileSampler());
   const tileCacheRef = useRef(new RoadTileCache());
-  const [roadsForDebug, setRoadsForDebug] = useState<any>(null);
 
   // Settings overlay state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -41,26 +31,10 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   const [particlesRadius, setParticlesRadius] = useState(4);
   const [particleCount, setParticleCount] = useState(200);
 
-  useEffect(() => {
-    (async () => {
-      const liberty = await loadBaseLibertyStyle();
-
-      // 1) Estonia detailed tiles (OpenMapTiles Estonia build)
-      const estTiles = getBundledEstoniaTilesTemplate();
-      const withEstonia = patchLibertyToLocalEstoniaTiles(liberty, estTiles);
-
-      setBaseStyle(withEstonia);
-    })().catch(console.error);
-  }, []);
-
-
+  // Map styling
   const mapStyle = useMemo(() => {
-    if (!baseStyle) return "https://tiles.openfreemap.org/styles/liberty";
-    return buildStyleWithRoadOverrides(baseStyle, {
-      highlightRoads: showRoads,
-      roadColor,
-      roadWidth,
-    });
+    if (!showRoads) return baseStyle; // uses the base style if roads are not highlighted
+    return buildStyleWithRoadOverrides(baseStyle, { roadColor, roadWidth });
   }, [baseStyle, showRoads, roadColor.r, roadColor.g, roadColor.b, roadWidth]);
 
   // Convert particles to GeoJSON
@@ -109,20 +83,10 @@ export default function MapScreen({ roadsGeoJSON }: Props) {
   }
 };
 
-  // When toggling showRoads on, materialize debug geojson once
-  useEffect(() => {
-    if (showRoads) setRoadsForDebug(tileCacheRef.current.getMergedGeoJSON());
-    else setRoadsForDebug(null);
-  }, [showRoads])
-
   useEffect(() => {
     const unsub = onGpsFix(async (fix) => {
       await tileCacheRef.current.loadAround(fix.lon, fix.lat);
       console.log("GPS fix:", fix.lat, fix.lon);
-
-      if (showRoads) {
-        setRoadsForDebug(tileCacheRef.current.getMergedGeoJSON());
-      }
     });
 
       startGps().catch(console.error);

@@ -2,22 +2,42 @@ import RNFS from "react-native-fs";
 
 export type Rgb = { r: number; g: number; b: number };
 
-let cachedBaseStyle: any | null = null;
+let cachedStyle: any | null = null;
 
-type StyleJSON = any;
-
-export function getBundledEstoniaTilesTemplate() {
-  // Bundled as: <MainBundlePath>/tiles/map_tiles/estonia
+/**
+ * Function for returning the path of map tiles that are bundled inside the app.
+ */
+export function getMapTiles() {
   return `file://${RNFS.MainBundlePath}/tiles/map_tiles/estonia/{z}/{x}/{y}.pbf`;
 }
 
-export function patchLibertyToLocalEstoniaTiles(base: StyleJSON, tilesTemplate: string) {
-  const style = JSON.parse(JSON.stringify(base));
+/**
+ * Function that reads the liberty style file and returns it.
+ * Extract: https://tiles.openfreemap.org/styles/liberty.
+ * Returns: Liberty style JSON
+ */
+export async function loadLibertyStyle(): Promise<any> {
+  if (cachedStyle) return cachedStyle; // returns the style object if it's already loaded  
+  
+  const path = `${RNFS.MainBundlePath}/styles/liberty.json`;
+  const text = await RNFS.readFile(path, "utf8"); // reads the style JSON file into a string
+  const styleJSON = JSON.parse(text); // converts the style string into a JSON file
 
-  style.sources = style.sources ?? {};
+  cachedStyle = styleJSON;
+
+  return cachedStyle;
+}
+
+/**  
+ * Function that overrides OpenMapTiles source inside the style file to read local tile files instead.
+ * Takes in: style's JSON & bundled map tiles.
+ * Returns: updated style JSON with the source pointing to bundled map tiles.
+ */
+export function patchStyleToTiles(style: any, tiles: string) {
+  // replaces all sources named "openmaptiles" with new source
   style.sources.openmaptiles = {
     type: "vector",
-    tiles: [tilesTemplate],
+    tiles: [tiles],
     minzoom: 0,
     maxzoom: 12,
   };
@@ -25,55 +45,11 @@ export function patchLibertyToLocalEstoniaTiles(base: StyleJSON, tilesTemplate: 
   return style;
 }
 
-function absolutizeStyleUrls(style: any) {
-  const origin = "https://tiles.openfreemap.org";
-
-  if (typeof style?.sprite === "string") {
-    if (style.sprite.startsWith("/")) style.sprite = origin + style.sprite;
-  }
-
-  if (typeof style?.glyphs === "string") {
-    if (style.glyphs.startsWith("/")) style.glyphs = origin + style.glyphs;
-  }
-
-  if (style?.sources && typeof style.sources === "object") {
-    for (const k of Object.keys(style.sources)) {
-      const src = style.sources[k];
-      if (!src) continue;
-
-      if (typeof src.url === "string" && src.url.startsWith("/")) {
-        src.url = origin + src.url;
-      }
-
-      if (Array.isArray(src.tiles)) {
-        src.tiles = src.tiles.map((t: any) =>
-          typeof t === "string" && t.startsWith("/") ? origin + t : t
-        );
-      }
-    }
-  }
-}
-
-export async function loadBaseLibertyStyle(): Promise<any> {
-  if (cachedBaseStyle) return cachedBaseStyle;
-
-  // you added assets/styles as a BLUE folder reference in Xcode
-  const p = `${RNFS.MainBundlePath}/styles/liberty.json`;
-  const txt = await RNFS.readFile(p, "utf8");
-  const s = JSON.parse(txt);
-
-  absolutizeStyleUrls(s);
-  cachedBaseStyle = s;
-
-  return cachedBaseStyle;
-}
-
-function rgbToRgba(c: Rgb, a = 1) {
-  return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
-}
-
-// IMPORTANT: Liberty roads live in OpenMapTiles "transportation" source-layer.
-// We only touch LINE layers there.
+/**
+ * Function that checks if a layer is the transportation (road) layer.
+ * Takes in: a layer
+ * Returns: true or false.
+ */
 function isTransportationLineLayer(layer: any): boolean {
   return layer?.type === "line" && layer["source-layer"] === "transportation";
 }
@@ -124,26 +100,32 @@ function scaleWidthExpression(expr: any, mult: number): any {
   return ["*", expr, mult];
 }
 
+function rgbToRgba(c: Rgb, a = 1) {
+  return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
+}
+
+/**
+ *  Function for painting roads and setting their width.
+ *  Takes in: style JSON & values from 'Settings'.
+ *  Returns: new style JSON (copy with overrides) with custom options.
+ */ 
 export function buildStyleWithRoadOverrides(
   baseStyle: any,
-  opts: {
-    highlightRoads: boolean;
+  options: {
     roadColor: Rgb;
-    roadWidth: number; // your slider value
+    roadWidth: number;
   }
 ) {
-  // shallow clone + clone layers/paint objects we modify
+  
   const style = {
-    ...baseStyle,
-    layers: Array.isArray(baseStyle.layers) ? baseStyle.layers.map((l: any) => ({ ...l })) : [],
+    ...baseStyle, // copies the baseStyle top-level keys
+    layers: baseStyle.layers.map((l: any) => ({ ...l })) 
   };
 
-  if (!opts.highlightRoads) return style;
-
-  const color = rgbToRgba(opts.roadColor, 1);
+  const color = rgbToRgba(options.roadColor, 1);
 
   // interpret your slider as multiplier: slider=2 -> 1x
-  const widthMult = Math.max(0.1, opts.roadWidth / 2);
+  const widthMult = Math.max(0.1, options.roadWidth / 2);
 
   for (const layer of style.layers) {
     if (!isTransportationLineLayer(layer)) continue;
