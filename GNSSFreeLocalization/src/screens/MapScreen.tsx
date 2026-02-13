@@ -40,7 +40,6 @@ export default function MapScreen({ style }: {style: any}) {
   // Convert particles to GeoJSON
   const particlesGeoJSON = useMemo(() => {
     if (!particles.length) return null;
-
     return {
       type: 'FeatureCollection',
       features: particles.map(particle => ({
@@ -101,7 +100,7 @@ export default function MapScreen({ style }: {style: any}) {
   return (
     <View style={{ flex: 1 }}>
       <Map
-        // Map
+        // Map style
         mapStyle={mapStyle}
         // Particles
         particlesGeoJSON={particlesGeoJSON}

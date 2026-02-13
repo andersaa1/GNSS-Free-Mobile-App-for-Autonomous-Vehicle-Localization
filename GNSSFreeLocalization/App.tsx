@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import MapScreen from './src/screens/MapScreen';
-import loadStyle from './src/app/loadBaseStyle'
+import loadBaseStyle from './src/app/loadBaseStyle'
 
 function App() {
   const [baseStyle, setBaseStyle] = useState<any>(null);
 
   // loads the style
   useEffect(() => {
-    loadStyle().then(setBaseStyle);
+    loadBaseStyle().then(setBaseStyle);
   }, []);
 
   // if still waiting for style, show a loading screen
