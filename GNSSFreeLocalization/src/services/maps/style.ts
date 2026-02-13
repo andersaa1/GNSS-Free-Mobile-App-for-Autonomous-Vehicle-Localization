@@ -48,13 +48,72 @@ export function patchStyleToTiles(style: any, tiles: string) {
 
 /**
  * Function that checks if a layer is the transportation (road) layer.
- * Expects: a layer
+ * Expects: a map layer.
  * Returns: true or false.
  */
-function isTransportationLineLayer(layer: any): boolean {
-  // filters to layers only drawn as lines with internal layer named "transportation"
-  return layer.type === "line" && layer["source-layer"] === "transportation";
+function isRoadLayer(layer: any): boolean {
+  if (layer?.type !== "line") return false;
+  if (layer?.["source-layer"] !== "transportation") return false;
+
+  // allowed transportation layer classes
+  const classes = ["motorway", "trunk", "primary", "secondary", "tertiary", "minor", "service", "link"];
+
+  const filter = layer.filter;
+
+  return filterClass(filter, classes);
 }
+
+/**
+ * Helper function for is RoadLayer function, that checks if a layer belongs to correct road layers.
+ * Expects: filter layer and allowed transportation layer classes.
+ * Returns: true or false, whether the transportation layer object belongs to allowed classes.
+ */
+function filterClass(filter: any, classes: string[]): boolean {
+  if (!Array.isArray(filter)) return false;
+
+  // ["==", ["get","class"], "primary"]
+  if (
+    filter[0] === "==" &&
+    Array.isArray(filter[1]) &&
+    filter[1][0] === "get" &&
+    filter[1][1] === "class" &&
+    typeof filter[2] === "string"
+  ) {
+    return classes.includes(filter[2]);
+  }
+
+  // ["in", ["get","class"], "primary","secondary",...]
+  if (
+    filter[0] === "in" &&
+    Array.isArray(filter[1]) &&
+    filter[1][0] === "get" &&
+    filter[1][1] === "class"
+  ) {
+    return filter.slice(2).some((v) => typeof v === "string" && classes.includes(v));
+  }
+
+  // ["match", ["get","class"], ["primary","trunk"], true, false]
+  if (
+    filter[0] === "match" &&
+    Array.isArray(filter[1]) &&
+    filter[1][0] === "get" &&
+    filter[1][1] === "class"
+  ) {
+    const candidates = filter[2];
+
+    // candidates can be ["primary","trunk"] or sometimes a single string
+    if (Array.isArray(candidates)) {
+      return candidates.some((v) => typeof v === "string" && classes.includes(v));
+    }
+    if (typeof candidates === "string") {
+      return classes.includes(candidates);
+    }
+  }
+
+  // recurse through nested expressions like ["all", ...] / ["any", ...]
+  return filter.some((x) => filterClass(x, classes));
+}
+
 
 /**
  * Function that creates a new array that multiplies the width which scales with the zoom.
@@ -75,7 +134,7 @@ function scaleRoadWidth(expr: any, mult: number): any {
 /**
  * Function that converts RGB object into a string.
  * Expects: RGB object and the step
- * Returns: RGB object as string
+ * Returns: RGB object as css string ("rgba(255, 120, 30, 0.5)")
  */
 function rgbToRgba(c: Rgb, a = 1) {
   return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
@@ -105,7 +164,7 @@ export function buildStyleWithRoadOverrides(
   const widthMult = Math.max(0.1, options.roadWidth / 2);
 
   for (const layer of style.layers) {
-    if (!isTransportationLineLayer(layer)) continue;
+    if (!isRoadLayer(layer)) continue;
 
     // creates a new copy of paint object and store the reference
     const paint = (layer.paint = { ...(layer.paint ?? {}) });
