@@ -1,11 +1,17 @@
+import React from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
+import CustomRadio from './CustomRadio';
 import RGBSlider from './RGBSlider';
 import CustomSlider from './CustomSlider';
 import CustomButton from './CustomButton';
+import type { MapStyleId } from "../app/loadBaseStyle";
 
 type RGB = { r: number; g: number; b: number };
 
 type Props = {
+  // Map style
+  mapStyleId: MapStyleId;
+  onChangeMapStyleId: (id: MapStyleId) => void;
   // Road display settings and handler
   showRoads: boolean;
   onToggleRoads: (value: boolean) => void;
@@ -25,6 +31,9 @@ type Props = {
 };
 
 export default function SettingsOverlay({
+  // Map style
+  mapStyleId,
+  onChangeMapStyleId,
   // Road display settings and handler
   showRoads,
   onToggleRoads,
@@ -55,6 +64,17 @@ export default function SettingsOverlay({
         {/* START OF MAP SETTINGS */}
         <View style={styles.header}>
           <Text style={styles.title2}>Map Settings</Text>
+        </View>
+
+        {/* Map style buttons */}
+        <View>
+          <Text style={styles.label}>Map Style:</Text>
+          <CustomRadio 
+            values={["liberty", "bright", "positron"]} 
+            labels={["Liberty", "Bright", "Positron"]}
+            selectedId={mapStyleId}
+            onChange={(id) => onChangeMapStyleId(id as MapStyleId)}
+            />
         </View>
 
         {/* Show roads toggle */}
@@ -168,16 +188,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
   },
-  button: {
-    marginTop: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    alignSelf: 'flex-start',
+  radioRow: {
+    flexDirection: "row",
+    marginTop: 8,
+    marginBottom: 8,
+    justifyContent: 'space-between'
   },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+  radioItem: {
+    
   },
+  radioText: {
+    fontSize: 13,
+  }
 });

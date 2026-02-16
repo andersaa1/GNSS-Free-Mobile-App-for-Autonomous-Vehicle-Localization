@@ -5,7 +5,11 @@
   "description": "Thesis project: mobile app for localizing self-driving vehicles without GNSS.",
   "author": "Ander Saarniit",
   "license": "ISC",
-  "keywords": ["react-native", "GNSS-free localization", "particle filter"],
+  "keywords": [
+    "react-native",
+    "GNSS-free localization",
+    "particle filter"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andersaa1/gnss-free-mobile-app-for-autonomous-vehicle-localization.git"
@@ -32,6 +36,7 @@
     "react-native": "0.83.1",
     "react-native-fs": "^2.20.0",
     "react-native-geolocation-service": "^5.3.1",
+    "react-native-radio-buttons-group": "^3.1.0",
     "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {

@@ -2,7 +2,7 @@ import RNFS from "react-native-fs";
 
 export type Rgb = { r: number; g: number; b: number };
 
-let cachedStyle: any | null = null;
+let cachedStyles: Record<string, any> = {};
 
 /**
  * Function for returning the path of map tiles that are bundled inside the app.
@@ -18,15 +18,15 @@ export function getMapTiles() {
  * Returns: style JSON
  */
 export async function loadStyle(style: string): Promise<any> {
-  if (cachedStyle) return cachedStyle; // returns the style object if it's already loaded  
+  if (cachedStyles[style]) return cachedStyles[style]; // returns the style object if it's already loaded  
   
   const path = `${RNFS.MainBundlePath}/styles/${style}.json`;
   const text = await RNFS.readFile(path, "utf8"); // reads the style JSON file into a string
   const styleJSON = JSON.parse(text); // converts the style string into a JSON file
 
-  cachedStyle = styleJSON;
+  cachedStyles[style] = styleJSON;
 
-  return cachedStyle;
+  return cachedStyles[style];
 }
 
 /**  
@@ -121,6 +121,9 @@ function filterClass(filter: any, classes: string[]): boolean {
  * Returns: a new array with multiplied width.
  */
 function scaleRoadWidth(expr: any, mult: number): any {
+  // if the style uses a plain number width (common in Positron style)
+  if (typeof expr === "number") return expr * mult;
+
   const op = expr[0]; // "interpolate"
 
   // ["interpolate", ["linear"], ["zoom"], z0, v0, z1, v1, ...]

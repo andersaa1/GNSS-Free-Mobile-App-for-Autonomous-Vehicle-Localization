@@ -8,10 +8,24 @@ import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
 import { RoadTileCache } from "../services/roads/roadTiles";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
 import { buildStyleWithRoadOverrides } from "../services/maps/style";
+import type { MapStyleId } from "../app/loadBaseStyle";
 
-export default function MapScreen({ style }: {style: any}) {
+export default function MapScreen({ 
+  initialStyle,
+  mapStyleId,
+  onChangeMapStyleId 
+}: {
+  initialStyle: any;
+  mapStyleId: MapStyleId;
+  onChangeMapStyleId: (id: MapStyleId) => void;  
+}) {
+
   // Map base style (before any custom options)
-  const [baseStyle, setBaseStyle] = useState(style);
+  const [baseStyle, setBaseStyle] = useState(initialStyle);
+
+  useEffect(() => {
+    setBaseStyle(initialStyle);
+  }, [initialStyle]);
 
   const samplerRef = useRef(new RoadTileSampler());
   const tileCacheRef = useRef(new RoadTileCache());
@@ -115,6 +129,9 @@ export default function MapScreen({ style }: {style: any}) {
 
       {settingsOpen && (
         <SettingsOverlay
+          // Map style settings
+          mapStyleId={mapStyleId}
+          onChangeMapStyleId={onChangeMapStyleId}
           // Road display settings
           showRoads={showRoads}
           onToggleRoads={setShowRoads}
