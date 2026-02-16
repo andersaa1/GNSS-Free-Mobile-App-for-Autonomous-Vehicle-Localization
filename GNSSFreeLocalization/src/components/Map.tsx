@@ -33,8 +33,8 @@ function MapComponent({
           zoomLevel: 7,
         }}
         maxBounds={{         // relative to screen:
-          ne: [27.9, 59.4],  // RIGHT |  TOP 
-          sw: [21.5, 57.8],  // LEFT  |  BOTTOM
+          ne: [28.21, 59.8],  // RIGHT |  TOP 
+          sw: [21.5, 57.51],  // LEFT  |  BOTTOM
         }}
         minZoomLevel={6.5}
         maxZoomLevel={19}
