@@ -1,5 +1,5 @@
 import React from "react";
-import { MapView, Camera, ShapeSource, CircleLayer } from '@maplibre/maplibre-react-native';
+import { MapView, Camera, ShapeSource, CircleLayer, FillLayer } from '@maplibre/maplibre-react-native';
 
 type Props = {
   // Map style
@@ -8,6 +8,9 @@ type Props = {
   particlesGeoJSON: any;
   particlesColor: { r: number; g: number; b: number };
   particlesRadius: number;
+  // Milestone boards
+  milestoneBoardsGeoJSON: any;
+  onPressMilestoneBoard: (featire: any) => void;
 };
 
 function MapComponent({
@@ -17,6 +20,9 @@ function MapComponent({
   particlesGeoJSON,
   particlesColor,
   particlesRadius,
+  // Milestone boards
+  milestoneBoardsGeoJSON,
+  onPressMilestoneBoard
 }: Props) {
   // Converts RGB to css string
   const particlesColorString = `rgba(${particlesColor.r}, ${particlesColor.g}, ${particlesColor.b})`;
@@ -52,6 +58,28 @@ function MapComponent({
           />
         </ShapeSource>
       )}
+
+      {/* Milestone board Layer */}
+      {milestoneBoardsGeoJSON && (
+        <ShapeSource
+          id="milestone-boards"
+          shape={milestoneBoardsGeoJSON}
+          onPress={(event) => {
+            const feature = event.features?.[0];
+            if (feature) {
+              onPressMilestoneBoard(feature);
+            }
+          }}
+        >
+          <FillLayer
+            id="milestone-boards-square"
+            style={{
+              fillColor: "rgba(255, 165, 0, 0.9)",
+              fillOutlineColor: "rgba(120, 80, 0, 1)",
+            }}
+          />
+        </ShapeSource>
+      )}
     </MapView>
   );
 }
@@ -65,7 +93,9 @@ const Map = React.memo(
     prev.particlesColor.r === next.particlesColor.r &&
     prev.particlesColor.g === next.particlesColor.g &&
     prev.particlesColor.b === next.particlesColor.b &&
-    prev.particlesRadius === next.particlesRadius,
+    prev.particlesRadius === next.particlesRadius &&
+    prev.milestoneBoardsGeoJSON === next.milestoneBoardsGeoJSON &&
+    prev.onPressMilestoneBoard === next.onPressMilestoneBoard,
 );
 
 export default Map;

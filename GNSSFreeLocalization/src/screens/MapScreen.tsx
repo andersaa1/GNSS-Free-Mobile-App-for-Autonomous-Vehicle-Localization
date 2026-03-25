@@ -1,3 +1,4 @@
+import proj4 from "proj4";
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
@@ -8,7 +9,9 @@ import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
 import { RoadTileCache } from "../services/roads/roadTiles";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
 import { buildStyleWithRoadOverrides } from "../services/maps/style";
+import milestoneBoardsJSON from "../assets/data/milestone-boards-cleaned.json";
 import type { MapStyleId } from "../app/loadBaseStyle";
+import type { MilestoneBoard, MilestoneBoardSign } from "../types/MilestoneBoard";
 
 export default function MapScreen({ 
   initialStyle,
@@ -51,6 +54,64 @@ export default function MapScreen({
     return buildStyleWithRoadOverrides(baseStyle, { roadColor, roadWidth });
   }, [baseStyle, showRoads, roadColor.r, roadColor.g, roadColor.b, roadWidth]);
 
+  // For converting EPSG:3301 to WGS84 (lon/lat)
+  // AI used
+  const EPSG3301 =
+  "+proj=lcc +lat_1=59.33333333333334 +lat_2=58 +lat_0=57.51755393055556 " +
+  "+lon_0=24 +x_0=500000 +y_0=6375000 +ellps=GRS80 +units=m +no_defs";
+
+  proj4.defs("EPSG:3301", EPSG3301);
+  proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
+
+  // Makes milestone boards usable inside the map
+  const milestoneBoards = useMemo<MilestoneBoard[]>(() => {
+    return milestoneBoardsJSON.features.map((feature: any) => {
+      const [x, y] = feature.geometry.coordinates;
+      const [lon, lat] = proj4("EPSG:3301", "EPSG:4326", [x, y]);
+
+      return {
+        oid: feature.properties.oid,
+        roadNumber: feature.properties.tee_number,
+        roadName: feature.properties.tee_nimi,
+        direction: feature.properties.direction,
+        signs: feature.properties.signs,
+        lon,
+        lat
+      };
+    });
+  }, []);
+
+  // Square for displaying milestone boards on the map
+  const createSquarePolygon = (lon: number, lat: number, size = 0.00008) => {
+    return [
+        [lon - size, lat - size],
+        [lon + size, lat - size],
+        [lon + size, lat + size],
+        [lon - size, lat + size],
+        [lon - size, lat - size],
+    ];
+  };
+  
+  const milestoneBoardGeoJSON = useMemo(() => {
+    return {
+      type: "FeatureCollection",
+      features: milestoneBoards.map((board) => ({
+        type: "Feature",
+        properties: {
+          oid: board.oid,
+          roadNumber: board.roadNumber,
+          roadName: board.roadName,
+          direction: board.direction,
+          signs: board.signs,
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [createSquarePolygon(board.lon, board.lat)],
+        },
+      })),
+    };
+  }, [milestoneBoards]);
+  
   // Convert particles to GeoJSON
   const particlesGeoJSON = useMemo(() => {
     if (!particles.length) return null;
@@ -120,6 +181,16 @@ export default function MapScreen({
         particlesGeoJSON={particlesGeoJSON}
         particlesColor={particlesColor}
         particlesRadius={particlesRadius}
+        // Milestone boards
+        milestoneBoardsGeoJSON={milestoneBoardGeoJSON}
+        onPressMilestoneBoard={(feature) => {
+          const props = feature?.properties;
+          if (!props) return;
+          const signs = Array.isArray(props.signs) ? props.signs : [];
+          signs.forEach((sign: any, index: number) => {
+            console.log(`${index + 1}. ${sign.destination} ${sign.distance} km`);
+          });
+        }}
       />
 
       {/* HUD layer */}

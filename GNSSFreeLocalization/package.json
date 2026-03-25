@@ -32,6 +32,7 @@
     "@react-native-community/slider": "^5.1.2",
     "@react-native/new-app-screen": "0.83.1",
     "maplibre-gl": "^5.16.0",
+    "proj4": "^2.20.4",
     "react": "19.2.0",
     "react-native": "0.83.1",
     "react-native-fs": "^2.20.0",
