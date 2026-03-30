@@ -1,17 +1,19 @@
-import proj4 from "proj4";
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
 import { Particle } from '../services/particleFilter';
-import { startGps, stopGps, onGpsFix } from "../services/sensors/gps";
-import { RoadTileCache } from "../services/roads/roadTiles";
+import { startGps, stopGps } from "../services/sensors/gps";
+import {
+  onMilestoneBoardDetected,
+  startCameraSensor,
+  stopCameraSensor,
+} from "../services/sensors/cameraSensor";
+import { milestoneBoards } from "../services/map/milestoneBoards";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
-import { buildStyleWithRoadOverrides } from "../services/maps/style";
-import milestoneBoardsJSON from "../assets/data/milestone-boards-cleaned.json";
+import { buildStyleWithRoadOverrides } from "../services/map/style";
 import type { MapStyleId } from "../app/loadBaseStyle";
-import type { MilestoneBoard, MilestoneBoardSign } from "../types/MilestoneBoard";
 
 export default function MapScreen({ 
   initialStyle,
@@ -22,7 +24,6 @@ export default function MapScreen({
   mapStyleId: MapStyleId;
   onChangeMapStyleId: (id: MapStyleId) => void;  
 }) {
-
   // Map base style (before any custom options)
   const [baseStyle, setBaseStyle] = useState(initialStyle);
 
@@ -31,7 +32,6 @@ export default function MapScreen({
   }, [initialStyle]);
 
   const samplerRef = useRef(new RoadTileSampler());
-  const tileCacheRef = useRef(new RoadTileCache());
 
   // Settings overlay state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -54,35 +54,8 @@ export default function MapScreen({
     return buildStyleWithRoadOverrides(baseStyle, { roadColor, roadWidth });
   }, [baseStyle, showRoads, roadColor.r, roadColor.g, roadColor.b, roadWidth]);
 
-  // For converting EPSG:3301 to WGS84 (lon/lat)
-  // AI used
-  const EPSG3301 =
-  "+proj=lcc +lat_1=59.33333333333334 +lat_2=58 +lat_0=57.51755393055556 " +
-  "+lon_0=24 +x_0=500000 +y_0=6375000 +ellps=GRS80 +units=m +no_defs";
-
-  proj4.defs("EPSG:3301", EPSG3301);
-  proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
-
-  // Makes milestone boards usable inside the map
-  const milestoneBoards = useMemo<MilestoneBoard[]>(() => {
-    return milestoneBoardsJSON.features.map((feature: any) => {
-      const [x, y] = feature.geometry.coordinates;
-      const [lon, lat] = proj4("EPSG:3301", "EPSG:4326", [x, y]);
-
-      return {
-        oid: feature.properties.oid,
-        roadNumber: feature.properties.tee_number,
-        roadName: feature.properties.tee_nimi,
-        direction: feature.properties.direction,
-        signs: feature.properties.signs,
-        lon,
-        lat
-      };
-    });
-  }, []);
-
   // Square for displaying milestone boards on the map
-  const createSquarePolygon = (lon: number, lat: number, size = 0.00008) => {
+  const createSquarePolygon = (lon: number, lat: number, size = 0.0001) => {
     return [
         [lon - size, lat - size],
         [lon + size, lat - size],
@@ -110,8 +83,27 @@ export default function MapScreen({
         },
       })),
     };
-  }, [milestoneBoards]);
-  
+  }, []);
+
+  // Subscribes to the camera sensor
+  useEffect(() => {
+    const unsub = onMilestoneBoardDetected((board) => {
+      console.log(`Detected milestone board ${board.oid}`);
+      board.signs.forEach((sign, index) => {
+        console.log(`${index + 1}. ${sign.destination} ${sign.distance} km`);
+      });
+    });
+
+    startGps().catch(console.error);
+    startCameraSensor(5);
+
+    return () => {
+      unsub();
+      stopCameraSensor();
+      stopGps();
+    };
+  }, []);
+
   // Convert particles to GeoJSON
   const particlesGeoJSON = useMemo(() => {
     if (!particles.length) return null;
@@ -157,21 +149,6 @@ export default function MapScreen({
   }
 };
 
-  useEffect(() => {
-    const unsub = onGpsFix(async (fix) => {
-      await tileCacheRef.current.loadAround(fix.lon, fix.lat);
-      console.log("GPS fix:", fix.lat, fix.lon);
-    });
-
-      startGps().catch(console.error);
-      return () => { unsub(); stopGps(); };
-  }, []);
-
-  useEffect(() => {
-    // Load tiles around Estonia center immediately so buttons work even before GPS fix
-    tileCacheRef.current.loadAround(25.0, 58.6).catch(console.error);
-  }, []);
-
   return (
     <View style={{ flex: 1 }}>
       <Map
@@ -187,6 +164,7 @@ export default function MapScreen({
           const props = feature?.properties;
           if (!props) return;
           const signs = Array.isArray(props.signs) ? props.signs : [];
+          console.log(props.oid)
           signs.forEach((sign: any, index: number) => {
             console.log(`${index + 1}. ${sign.destination} ${sign.distance} km`);
           });

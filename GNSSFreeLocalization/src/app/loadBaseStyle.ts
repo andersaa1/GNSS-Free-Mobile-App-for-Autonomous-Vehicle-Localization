@@ -1,4 +1,4 @@
-import { loadStyle, getMapTiles, patchStyleToTiles } from "../services/maps/style";
+import { loadStyle, getMapTiles, patchStyleToTiles } from "../services/map/style";
 
 export type MapStyleId = "liberty" | "bright" | "positron";
 
