@@ -10,6 +10,11 @@ import {
   startCameraSensor,
   stopCameraSensor,
 } from "../services/sensors/cameraSensor";
+import { 
+  onSpeedChanged,
+  startSpeedSensor,
+  stopSpeedSensor,
+ } from "../services/sensors/speedSensor"; 
 import { milestoneBoards } from "../services/map/milestoneBoards";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
@@ -85,21 +90,30 @@ export default function MapScreen({
     };
   }, []);
 
-  // Subscribes to the camera sensor
+  // Subscribes to the sensors
   useEffect(() => {
-    const unsub = onMilestoneBoardDetected((board) => {
+    const unsubBoard = onMilestoneBoardDetected((board) => {
       console.log(`Detected milestone board ${board.oid}`);
       board.signs.forEach((sign, index) => {
         console.log(`${index + 1}. ${sign.destination} ${sign.distance} km`);
       });
     });
 
+    const unsubSpeed = onSpeedChanged((sample) => {
+      console.log(
+        `Speed: ${sample.speed.toFixed(2)} m/s at ${new Date(sample.timestamp).toISOString()}`
+      );
+    });
+
     startGps().catch(console.error);
     startCameraSensor(5);
+    startSpeedSensor(2);
 
     return () => {
-      unsub();
+      unsubBoard();
+      unsubSpeed();
       stopCameraSensor();
+      stopSpeedSensor();
       stopGps();
     };
   }, []);
