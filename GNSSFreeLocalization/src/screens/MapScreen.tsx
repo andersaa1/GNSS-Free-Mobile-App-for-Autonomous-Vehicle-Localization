@@ -15,6 +15,11 @@ import {
   startSpeedSensor,
   stopSpeedSensor,
  } from "../services/sensors/speedSensor"; 
+import {
+  startDistanceTracker,
+  stopDistanceTracker,
+  onDistanceChanged,
+} from "../services/navigation/distanceTracker";
 import { milestoneBoards } from "../services/map/milestoneBoards";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
@@ -105,14 +110,23 @@ export default function MapScreen({
       );
     });
 
+    const unsubDistance = onDistanceChanged((sample) => { 
+      console.log(
+        `Δd=${sample.deltaDistance.toFixed(2)} m, total=${sample.totalDistance.toFixed(2)} m`
+      );
+    });
+
     startGps().catch(console.error);
     startCameraSensor(5);
     startSpeedSensor(2);
+    startDistanceTracker();
 
     return () => {
       unsubBoard();
       unsubSpeed();
       stopCameraSensor();
+      unsubDistance();
+      stopDistanceTracker();
       stopSpeedSensor();
       stopGps();
     };
