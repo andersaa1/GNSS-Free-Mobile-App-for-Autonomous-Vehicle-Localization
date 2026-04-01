@@ -493,7 +493,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 183.578,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "sillamäe",
@@ -516,7 +516,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 183.753,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "vaivara",
@@ -547,7 +547,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 183.995,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "vaivara",
@@ -1597,7 +1597,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 69.235,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "tapa",
@@ -20028,7 +20028,7 @@
         "tee_number": 21,
         "tee_nimi": "Rakvere-Luige tee",
         "km": 61.562,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "rakvere",
@@ -23662,7 +23662,7 @@
         "tee_number": 20172,
         "tee_nimi": "Märjamaa-Haimre tee",
         "km": 2.449,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "tallinn",
@@ -32190,7 +32190,7 @@
         "tee_number": 25104,
         "tee_nimi": "Keema-Ruhingu tee",
         "km": 0.009,
-        "direction": NaN,
+        "direction": "PAREMAL",
         "signs": [
           {
             "destination": "urvaste mõis",
@@ -33444,7 +33444,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 158.179,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "kohtla-järve",
@@ -33467,7 +33467,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 160.185,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "tartu",
@@ -33498,7 +33498,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 163.061,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "tartu",
@@ -33927,7 +33927,7 @@
         "tee_number": 2,
         "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
         "km": 185.031,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "külitse",
@@ -36801,7 +36801,7 @@
         "tee_number": 80,
         "tee_nimi": "Heltermaa-Kärdla-Luidja tee",
         "km": 0.01,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "sarve",
@@ -43550,7 +43550,7 @@
         "tee_number": 15,
         "tee_nimi": "Tallinna-Rapla-Türi tee",
         "km": 53.59,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "türi",
@@ -46371,7 +46371,7 @@
         "tee_number": 2509,
         "tee_nimi": "Konnametsa ring",
         "km": 0.02,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "tartu",
@@ -46949,7 +46949,7 @@
         "tee_number": 14209,
         "tee_nimi": "Tabivere-Uhmardu tee",
         "km": 8.173,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "pataste",
@@ -55081,7 +55081,7 @@
         "tee_number": 14209,
         "tee_nimi": "Tabivere-Uhmardu tee",
         "km": 4.999,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "juula",
@@ -58202,7 +58202,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 162.764,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "tartu",
@@ -62586,7 +62586,7 @@
         "tee_number": 14223,
         "tee_nimi": "Mullavere-Saadjärve tee",
         "km": 3.894,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "uhmardu",
@@ -64140,7 +64140,7 @@
         "tee_number": 22136,
         "tee_nimi": "Kambja-Rebase tee",
         "km": 2.814,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "reolasoo",
@@ -86431,7 +86431,7 @@
         "tee_number": 59,
         "tee_nimi": "Pärnu-Tori tee",
         "km": 21.167,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "pärnu",
@@ -88860,7 +88860,7 @@
         "tee_number": 1,
         "tee_nimi": "Tallinna-Narva tee",
         "km": 81.825,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "kihlevere",
@@ -91125,7 +91125,7 @@
         "tee_number": 6240010,
         "tee_nimi": "Paikuse tee",
         "km": 0.021,
-        "direction": NaN,
+        "direction": "TELJEL",
         "signs": [
           {
             "destination": "pärnu",
