@@ -1214,6 +1214,33 @@
         "tee_number": 2,
         "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
         "km": 121.502,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "jõgeva",
+            "distance": 29
+          },
+          {
+            "destination": "põltsamaa",
+            "distance": 1
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          615507.161215,
+          6504278.446318
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 869326,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 121.502,
         "direction": "PAREMAL",
         "signs": [
           {
@@ -1883,12 +1910,20 @@
         "direction": "VASAKUL",
         "signs": [
           {
+            "destination": "jõhvi mnt",
+            "distance": 20
+          },
+          {
             "destination": "jõgeva mnt",
             "distance": 13
           },
           {
             "destination": "kärkna",
             "distance": 12
+          },
+          {
+            "destination": "jääaja",
+            "distance": 21
           }
         ]
       },
@@ -1910,6 +1945,14 @@
         "direction": "PAREMAL",
         "signs": [
           {
+            "destination": "luhamaa",
+            "distance": 120
+          },
+          {
+            "destination": "võru",
+            "distance": 85
+          },
+          {
             "destination": "põlva",
             "distance": 64
           },
@@ -1924,6 +1967,29 @@
         "coordinates": [
           645246.643645,
           6479229.618339
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 879004,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 162.217,
+        "direction": "PAREMAL",
+        "signs": [
+          {
+            "destination": "kardla",
+            "distance": 5
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          650424.309658,
+          6477719.902274
         ]
       }
     },
@@ -1991,6 +2057,10 @@
         "direction": "PAREMAL",
         "signs": [
           {
+            "destination": "tartu",
+            "distance": 10
+          },
+          {
             "destination": "viljandi mnt",
             "distance": 9
           },
@@ -2044,6 +2114,10 @@
         "km": 169.492,
         "direction": "VASAKUL",
         "signs": [
+          {
+            "destination": "tallinn",
+            "distance": 169
+          },
           {
             "destination": "viljandi mnt",
             "distance": 9
@@ -2127,7 +2201,7 @@
         "signs": [
           {
             "destination": "tallinn",
-            "distance": 177
+            "distance": 172
           },
           {
             "destination": "rahinge",
@@ -2200,6 +2274,41 @@
     {
       "type": "Feature",
       "properties": {
+        "oid": 874378,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 170.823,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "tallinn",
+            "distance": 178
+          },
+          {
+            "destination": "paide",
+            "distance": 96
+          },
+          {
+            "destination": "põltsamaa",
+            "distance": 52
+          },
+          {
+            "destination": "puurmani",
+            "distance": 31
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          654631.959122,
+          6477443.443870
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "oid": 874379,
         "tee_number": 2,
         "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
@@ -2208,7 +2317,7 @@
         "signs": [
           {
             "destination": "tallinn",
-            "distance": 178
+            "distance": 173
           },
           {
             "destination": "vorbuse",
@@ -19159,7 +19268,30 @@
         "oid": 958107,
         "tee_number": 2,
         "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
-        "km": 128.769,
+        "km": 125.769,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "umbusi",
+            "distance": 7
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          623133.637172,
+          6501152.497502
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958187,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 125.769,
         "direction": "PAREMAL",
         "signs": [
           {
@@ -19171,8 +19303,193 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          622026.363951,
-          6501658.702194
+          622871.628137,
+          6501242.285630
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958487,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 125.769,
+        "direction": "PAREMAL",
+        "signs": [
+          {
+            "destination": "pudivere",
+            "distance": 6
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          623591.408483,
+          6501065.591641
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958127,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 123.769,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "sulustvere",
+            "distance": 6
+          },
+          {
+            "destination": "lustivere",
+            "distance": 3
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          621419.804350,
+          6501940.019587
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 938127,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 123.769,
+        "direction": "PAREMAL",
+        "signs": [
+          {
+            "destination": "sulustvere",
+            "distance": 6
+          },
+          {
+            "destination": "lustivere",
+            "distance": 3
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          621175.198183,
+          6501959.143185
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958157,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 120.769,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "umbusi",
+            "distance": 10
+          },
+          {
+            "destination": "annikvere",
+            "distance": 2
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          619456.272513,
+          6502257.038884
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958357,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 188.769,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "lustivere",
+            "distance": 5
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          616192.140288,
+          6503854.230043
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 958557,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 188.769,
+        "direction": "PAREMAL",
+        "signs": [
+          {
+            "destination": "lustivere",
+            "distance": 5
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          615956.355390,
+          6503992.057338
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 952557,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 192.769,
+        "direction": "PAREMAL",
+        "signs": [
+          {
+            "destination": "luhamaa",
+            "distance": 160
+          },
+          {
+            "destination": "võru",
+            "distance": 129
+          },
+          {
+            "destination": "põlva",
+            "distance": 107
+          },
+          {
+            "destination": "tartu",
+            "distance": 57
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          616546.372620,
+          6503639.731401
         ]
       }
     },
@@ -25992,6 +26309,10 @@
           {
             "destination": "laeva",
             "distance": 4
+          },
+          {
+            "destination": "siniküla",
+            "distance": 1
           }
         ]
       },
@@ -26054,6 +26375,41 @@
         "coordinates": [
           635422.610624,
           6487998.705945
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 1005300,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 142.571,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "tallinn",
+            "distance": 149
+          },
+          {
+            "destination": "paide",
+            "distance": 70
+          },
+          {
+            "destination": "põltsamaa",
+            "distance": 28
+          },
+          {
+            "destination": "puurmani",
+            "distance": 8
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          635037.218435,
+          6488674.971491
         ]
       }
     },
@@ -33529,7 +33885,7 @@
         "signs": [
           {
             "destination": "jõgeva",
-            "distance": 28
+            "distance": 27
           },
           {
             "destination": "tabivere",
@@ -33537,6 +33893,10 @@
           },
           {
             "destination": "puurmani",
+            "distance": 2
+          },
+          {
+            "destination": "jüriküla",
             "distance": 2
           }
         ]
@@ -33546,6 +33906,130 @@
         "coordinates": [
           633344.16854,
           6493976.47945
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 1012419,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 143.027,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "luhamaa",
+            "distance": 140
+          },
+          {
+            "destination": "võru",
+            "distance": 104
+          },
+          {
+            "destination": "põlva",
+            "distance": 84
+          },
+          {
+            "destination": "tartu",
+            "distance": 36
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          633389.319580,
+          6493760.423190
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 1050414,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 141.027,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "tallinn",
+            "distance": 141
+          },
+          {
+            "destination": "paide",
+            "distance": 63
+          },
+          {
+            "destination": "mäo",
+            "distance": 59
+          },
+          {
+            "destination": "põltsamaa",
+            "distance": 20
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          631887.022176,
+          6495738.744437
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 1050424,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 138.027,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "umbusi",
+            "distance": 8
+          },
+          {
+            "destination": "saduküla",
+            "distance": 9
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          628429.618689,
+          6498099.563221
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "oid": 1030424,
+        "tee_number": 2,
+        "tee_nimi": "Tallinna-Tartu-Võru-Luhamaa tee",
+        "km": 138.027,
+        "direction": "VASAKUL",
+        "signs": [
+          {
+            "destination": "saduküla",
+            "distance": 9
+          },
+          {
+            "destination": "umbusi",
+            "distance": 8
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          628293.310802,
+          6498194.256169
         ]
       }
     },
@@ -33614,7 +34098,7 @@
         "signs": [
           {
             "destination": "tallinn",
-            "distance": 161
+            "distance": 155
           },
           {
             "destination": "siniküla",
@@ -33681,6 +34165,18 @@
           {
             "destination": "tallinn",
             "distance": 169
+          },
+          {
+            "destination": "paide",
+            "distance": 83
+          },
+          {
+            "destination": "põltsamaa",
+            "distance": 42
+          },
+          {
+            "destination": "puurmani",
+            "distance": 22
           }
         ]
       },
@@ -33702,12 +34198,20 @@
         "direction": "PAREMAL",
         "signs": [
           {
-            "destination": "jõgevamnt",
+            "destination": "jõhvi mnt",
+            "distance": 20
+          },
+          {
+            "destination": "jõgeva mnt",
             "distance": 13
           },
           {
             "destination": "kärkna",
             "distance": 12
+          },
+          {
+            "destination": "jääaja",
+            "distance": 21
           }
         ]
       },
@@ -44490,7 +44994,7 @@
         "signs": [
           {
             "destination": "tallinn",
-            "distance": 179
+            "distance": 173
           },
           {
             "destination": "võru",
@@ -59044,7 +59548,7 @@
         "signs": [
           {
             "destination": "jõgeva",
-            "distance": 39
+            "distance": 29
           },
           {
             "destination": "tallinn",
