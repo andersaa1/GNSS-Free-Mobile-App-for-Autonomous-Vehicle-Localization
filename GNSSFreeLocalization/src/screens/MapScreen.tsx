@@ -105,15 +105,15 @@ export default function MapScreen({
     });
 
     const unsubSpeed = onSpeedChanged((sample) => {
-      console.log(
-        `Speed: ${sample.speed.toFixed(2)} m/s at ${new Date(sample.timestamp).toISOString()}`
-      );
+      //console.log(
+        //`Speed: ${sample.speed.toFixed(2)} m/s at ${new Date(sample.timestamp).toISOString()}`
+      //);
     });
 
     const unsubDistance = onDistanceChanged((sample) => { 
-      console.log(
-        `Δd=${sample.deltaDistance.toFixed(2)} m, total=${sample.totalDistance.toFixed(2)} m`
-      );
+      //console.log(
+        //`Δd=${sample.deltaDistance.toFixed(2)} m, total=${sample.totalDistance.toFixed(2)} m`
+      //);
     });
 
     startGps().catch(console.error);
