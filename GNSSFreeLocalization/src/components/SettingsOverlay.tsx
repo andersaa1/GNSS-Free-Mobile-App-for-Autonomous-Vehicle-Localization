@@ -133,9 +133,9 @@ export default function SettingsOverlay({
           value={particleCount}
           onChangeValue={onChangeParticleCount}
         />
-        {/* Generate random particles button */}
+        {/* Starts the initial distribution phase */}
         <CustomButton
-          label="Sample Random Particles"
+          label="Start the Particle Filter"
           onButtonPressed={onGenerateParticles}
           disabled={isGeneratingParticles}
         />

@@ -3,7 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
-import { Particle } from '../services/particleFilter';
+import type { Particle } from "../services/particleFilter/types";
+import { createInitialDistribution } from "../services/particleFilter/initialDistribution";
 import { startGps, stopGps } from "../services/sensors/gps";
 import {
   onMilestoneBoardDetected,
@@ -40,8 +41,6 @@ export default function MapScreen({
   useEffect(() => {
     setBaseStyle(initialStyle);
   }, [initialStyle]);
-
-  const samplerRef = useRef(new RoadTileSampler());
 
   // Settings overlay state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -151,31 +150,39 @@ export default function MapScreen({
     };
   }, [particles]);
 
-  // Handler to generate random particles
+  // Preloads indexes for speed
+  const samplerRef = useRef(new RoadTileSampler());
+  useEffect(() => {
+    samplerRef.current.init().catch((e) => {
+      console.error("Road tile sampler init failed:", e);
+    });
+  }, []);
+
+  // Handler for the inital distribution step
   const generateParticles = async () => {
-  if (isGeneratingParticles) return;
+    if (isGeneratingParticles) return;
 
-  setIsGeneratingParticles(true);
-  await new Promise(r => setTimeout(() => r(undefined), 0));
+    setIsGeneratingParticles(true);
+    await new Promise(r => setTimeout(() => r(undefined), 0));
 
-  try {
-    const pts = await samplerRef.current.sampleGlobalParticles(particleCount);
+    try {
+      const t0 = Date.now();
 
-    const n = pts.length || 1;
-    const sampledParticles: Particle[] = pts.map((p, i) => ({
-      id: i,
-      x: p.lon,
-      y: p.lat,
-      weight: 1 / n,
-    }));
+      const sampledParticles = await createInitialDistribution(
+        samplerRef.current,
+        particleCount
+      );
 
-    setParticles(sampledParticles);
-  } catch (e) {
-    console.error("Particle generation failed:", e);
-  } finally {
-    setIsGeneratingParticles(false);
-  }
-};
+      const t1 = Date.now();
+      console.log(`Initial distribution took ${t1 - t0} ms`);
+
+      setParticles(sampledParticles);
+    } catch (e) {
+      console.error("Initial distribution failed:", e);
+    } finally {
+      setIsGeneratingParticles(false);
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>
