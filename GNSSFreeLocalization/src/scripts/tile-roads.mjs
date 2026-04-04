@@ -3,20 +3,8 @@ import path from "path";
 
 const INPUT = path.resolve("src/assets/data/estonia-roads.json");
 const OUTDIR = path.resolve("src/assets/tiles/road_tiles");
-const Z = 12;
-
-// WebMercator tile math
-// https://www.analyze.earth/posts/web-mercator-tiles/
-
-function lon2tileX(lon, z) {
-  return Math.floor(((lon + 180) / 360) * (1 << z));
-}
-
-function lat2tileY(lat, z) {
-  const rad = (lat * Math.PI) / 180;
-  const n = Math.tan(Math.PI / 4 + rad / 2);
-  return Math.floor(((1 - Math.log(n) / Math.PI) / 2) * (1 << z));
-}
+const OUTFILE = path.join(OUTDIR, "road_point_pool_z12.json");
+const POOL_SIZE = 100000;
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
@@ -27,21 +15,23 @@ function forEachLine(geom, cb) {
 
   if (geom.type === "LineString" && Array.isArray(geom.coordinates)) {
     cb(geom.coordinates);
-  } else if (geom.type === "MultiLineString" && Array.isArray(geom.coordinates)) {
+    return;
+  }
+
+  if (geom.type === "MultiLineString" && Array.isArray(geom.coordinates)) {
     for (const line of geom.coordinates) {
       if (Array.isArray(line)) cb(line);
     }
   }
 }
 
-// Distance approximation in meters for small segments
 function segmentLengthMeters(a, b) {
   const lon1 = a[0];
   const lat1 = a[1];
   const lon2 = b[0];
   const lat2 = b[1];
 
-  const meanLatRad = ((lat1 + lat2) * 0.5 * Math.PI) / 180;
+  const meanLatRad = (((lat1 + lat2) * 0.5) * Math.PI) / 180;
   const metersPerDegLat = 111320;
   const metersPerDegLon = 111320 * Math.cos(meanLatRad);
 
@@ -51,41 +41,16 @@ function segmentLengthMeters(a, b) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-
-function addToTile(tileMap, weights, z, x, y, coords, props) {
-  const key = `${z}/${x}/${y}`;
-  if (!tileMap.has(key)) tileMap.set(key, []);
-  tileMap.get(key).push({
-    type: "Feature",
-    properties: props ?? {},
-    geometry: { type: "LineString", coordinates: coords },
-  });
-
-  // weight by number of segments in this line
-  const w = segCount(coords);
-  weights.set(key, (weights.get(key) ?? 0) + w);
-}
-
-function tileKey(z, x, y) {
-  return `${z}/${x}/${y}`;
-}
-
 console.log("Reading", INPUT);
 const roads = JSON.parse(fs.readFileSync(INPUT, "utf8"));
 
 if (!roads || roads.type !== "FeatureCollection" || !Array.isArray(roads.features)) {
-  throw new Error("Expected FeatureCollection");
+  throw new Error("Expected GeoJSON FeatureCollection");
 }
 
-/**
- * tileMap key: "z/x/y"
- * value: {
- *   z, x, y,
- *   totalLength,
- *   segments: [{ a:[lon,lat], b:[lon,lat], len }]
- * }
- */
-const tileMap = new Map();
+// Store segments as compact arrays:
+// [lon1, lat1, lon2, lat2, len]
+const segments = [];
 
 let featureCount = 0;
 let lineCount = 0;
@@ -119,111 +84,87 @@ for (const feature of roads.features) {
       }
 
       const len = segmentLengthMeters(a, b);
-
-      // Skip zero/near-zero segments
       if (!Number.isFinite(len) || len <= 0.01) {
         skippedSegments++;
         continue;
       }
 
-      const midLon = (a[0] + b[0]) * 0.5;
-      const midLat = (a[1] + b[1]) * 0.5;
-
-      const x = lon2tileX(midLon, Z);
-      const y = lat2tileY(midLat, Z);
-      const key = tileKey(Z, x, y);
-
-      if (!tileMap.has(key)) {
-        tileMap.set(key, {
-          z: Z,
-          x,
-          y,
-          totalLength: 0,
-          segments: [],
-        });
-      }
-
-      const tile = tileMap.get(key);
-      tile.segments.push({
-        a: [a[0], a[1]],
-        b: [b[0], b[1]],
-        len,
-      });
-      tile.totalLength += len;
+      segments.push([a[0], a[1], b[0], b[1], len]);
       segmentCount++;
     }
   });
 
   if (featureCount % 5000 === 0) {
     console.log(
-      `Processed features: ${featureCount}, lines: ${lineCount}, segments: ${segmentCount}`
+      `Processed features=${featureCount}, lines=${lineCount}, segments=${segmentCount}`
     );
   }
 }
 
-console.log("Tiles:", tileMap.size);
+if (!segments.length) {
+  throw new Error("No valid road segments found");
+}
+
 console.log("Valid segments:", segmentCount);
 console.log("Skipped segments:", skippedSegments);
 
-// Write tile files
-for (const [key, tile] of tileMap.entries()) {
-  let acc = 0;
-  const outSegments = tile.segments.map((s) => {
-    acc += s.len;
-    return {
-      a: s.a,
-      b: s.b,
-      len: s.len,
-      cum: acc,
-    };
-  });
-
-  const dir = path.join(OUTDIR, String(tile.z), String(tile.x));
-  ensureDir(dir);
-
-  const file = path.join(dir, `${tile.y}.json`);
-  fs.writeFileSync(
-    file,
-    JSON.stringify({
-      z: tile.z,
-      x: tile.x,
-      y: tile.y,
-      totalLength: tile.totalLength,
-      segmentCount: outSegments.length,
-      segments: outSegments,
-    })
-  );
-}
-
-// Write global weighted index
-const tiles = [];
+// Build prefix sums for weighted segment sampling
+const cum = new Array(segments.length);
 let totalW = 0;
 
-for (const tile of tileMap.values()) {
-  if (!Number.isFinite(tile.totalLength) || tile.totalLength <= 0) continue;
-
-  tiles.push({
-    z: tile.z,
-    x: tile.x,
-    y: tile.y,
-    w: tile.totalLength,
-  });
-
-  totalW += tile.totalLength;
+for (let i = 0; i < segments.length; i++) {
+  totalW += segments[i][4];
+  cum[i] = totalW;
 }
 
-const index = {
-  z: Z,
-  totalW,
-  tileCount: tiles.length,
-  tiles,
+function pickWeightedSegment() {
+  const r = Math.random() * totalW;
+
+  let lo = 0;
+  let hi = cum.length - 1;
+
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (r <= cum[mid]) hi = mid;
+    else lo = mid + 1;
+  }
+
+  return segments[lo];
+}
+
+// Precompute road points
+// Store as compact arrays: [lon, lat, dx, dy]
+const points = new Array(POOL_SIZE);
+
+for (let i = 0; i < POOL_SIZE; i++) {
+  const seg = pickWeightedSegment();
+  const lon1 = seg[0];
+  const lat1 = seg[1];
+  const lon2 = seg[2];
+  const lat2 = seg[3];
+
+  const t = Math.random();
+  const lon = lon1 + (lon2 - lon1) * t;
+  const lat = lat1 + (lat2 - lat1) * t;
+
+  // local direction vector of the source segment
+  const dx = lon2 - lon1;
+  const dy = lat2 - lat1;
+
+  points[i] = [lon, lat, dx, dy];
+
+  if (i > 0 && i % 10000 === 0) {
+    console.log(`Generated ${i}/${POOL_SIZE} road points`);
+  }
+}
+
+const out = {
+  poolSize: POOL_SIZE,
+  points,
 };
 
 ensureDir(OUTDIR);
-fs.writeFileSync(
-  path.join(OUTDIR, `index_z${Z}.json`),
-  JSON.stringify(index)
-);
+fs.writeFileSync(OUTFILE, JSON.stringify(out));
 
-console.log("Wrote index:", path.join(OUTDIR, `index_z${Z}.json`));
+console.log("Wrote:", OUTFILE);
 console.log("Done.");
