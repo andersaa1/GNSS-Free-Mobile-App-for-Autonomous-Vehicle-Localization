@@ -5,6 +5,7 @@ import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
 import type { Particle } from "../services/particleFilter/types";
 import { createInitialDistribution } from "../services/particleFilter/initialDistribution";
+import { sampleParticles } from "../services/particleFilter/sampleParticles";
 import { startGps, stopGps } from "../services/sensors/gps";
 import {
   onMilestoneBoardDetected,
@@ -110,6 +111,16 @@ export default function MapScreen({
     });
 
     const unsubDistance = onDistanceChanged((sample) => { 
+      setParticles((prev) => {
+        if (!prev.length) return prev;
+        
+        const next = sampleParticles(prev, sample.deltaDistance, {
+          distanceNoiseStdM: 1.5,
+        });
+
+        return next;
+      });
+
       //console.log(
         //`Δd=${sample.deltaDistance.toFixed(2)} m, total=${sample.totalDistance.toFixed(2)} m`
       //);

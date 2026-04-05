@@ -10,6 +10,8 @@ type RoadPointPool = {
 export type SampledRoadPoint = {
   lon: number;
   lat: number;
+  dx: number;
+  dy: number;
 };
 
 export class RoadTileSampler {
@@ -43,30 +45,6 @@ export class RoadTileSampler {
     return this.pool.points[idx];
   }
 
-  private sampleFromPoolEntry(entry: RoadPointEntry): SampledRoadPoint {
-    const [lon, lat, dx, dy] = entry;
-
-    // Tiny random jitter along the local road direction so repeated runs
-    // do not always give exactly the same fixed pool points.
-    const dirLen = Math.sqrt(dx * dx + dy * dy);
-
-    if (!Number.isFinite(dirLen) || dirLen <= 0) {
-      return { lon, lat };
-    }
-
-    const ux = dx / dirLen;
-    const uy = dy / dirLen;
-
-    // Small longitudinal jitter in degrees.
-    // Particle stays near the original road segment.
-    const jitter = (Math.random() - 0.5) * 0.00005;
-
-    return {
-      lon: lon + ux * jitter,
-      lat: lat + uy * jitter,
-    };
-  }
-
   async sampleInitialParticles(count: number): Promise<SampledRoadPoint[]> {
     await this.init();
 
@@ -76,8 +54,8 @@ export class RoadTileSampler {
     const out: SampledRoadPoint[] = new Array(n);
 
     for (let i = 0; i < n; i++) {
-      const entry = this.pickPoint();
-      out[i] = this.sampleFromPoolEntry(entry);
+      const [lon, lat, dx, dy] = this.pickPoint();
+      out[i] = { lon, lat, dx, dy };
     }
 
     return out;
