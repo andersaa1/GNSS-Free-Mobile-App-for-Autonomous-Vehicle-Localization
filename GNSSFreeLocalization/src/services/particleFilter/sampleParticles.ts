@@ -4,32 +4,6 @@ export type SampleParticlesOptions = {
   distanceNoiseStdM?: number;
 };
 
-/**
- * Converts meters in east-west direction to longitude degrees
- * at the provided latitude.
- */
-function metersToLonDegrees(meters: number, latDeg: number): number {
-  const latRad = (latDeg * Math.PI) / 180;
-  const metersPerDegLon = 111320 * Math.cos(latRad);
-
-  if (!Number.isFinite(metersPerDegLon) || Math.abs(metersPerDegLon) < 1e-9) {
-    return 0;
-  }
-
-  return meters / metersPerDegLon;
-}
-
-/**
- * Converts meters in north-south direction to latitude degrees.
- */
-function metersToLatDegrees(meters: number): number {
-  const metersPerDegLat = 111320;
-  return meters / metersPerDegLat;
-}
-
-/**
- * Gaussian random number using Box-Muller transform.
- */
 function gaussianRandom(mean = 0, std = 1): number {
   const u1 = Math.max(Math.random(), 1e-12);
   const u2 = Math.random();
@@ -38,17 +12,30 @@ function gaussianRandom(mean = 0, std = 1): number {
   return mean + z0 * std;
 }
 
-/**
- * Sampling / motion update step.
- *
- * Moves each particle forward by deltaDistance along its fixed heading.
- * The heading is NOT flipped during propagation.
- *
- * Note:
- * This first version preserves heading, but it does not yet snap particles
- * back to the road geometry, so it is only "heading constrained", not fully
- * road-graph constrained on curved roads/intersections.
- */
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function segmentLengthMeters(
+  lon1: number,
+  lat1: number,
+  lon2: number,
+  lat2: number
+): number {
+  const meanLatRad = (((lat1 + lat2) * 0.5) * Math.PI) / 180;
+  const metersPerDegLat = 111320;
+  const metersPerDegLon = 111320 * Math.cos(meanLatRad);
+
+  const dx = (lon2 - lon1) * metersPerDegLon;
+  const dy = (lat2 - lat1) * metersPerDegLat;
+
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
 export function sampleParticles(
   particles: Particle[],
   deltaDistanceM: number,
@@ -62,19 +49,31 @@ export function sampleParticles(
   const distanceNoiseStdM = options?.distanceNoiseStdM ?? 1.5;
 
   return particles.map((particle) => {
-    const noisyDistance =
-      deltaDistanceM + gaussianRandom(0, distanceNoiseStdM);
+    const noisyDistance = deltaDistanceM + gaussianRandom(0, distanceNoiseStdM);
 
-    const dxMeters = particle.dirX * noisyDistance;
-    const dyMeters = particle.dirY * noisyDistance;
+    const segLen = segmentLengthMeters(
+      particle.segLon1,
+      particle.segLat1,
+      particle.segLon2,
+      particle.segLat2
+    );
 
-    const dLon = metersToLonDegrees(dxMeters, particle.y);
-    const dLat = metersToLatDegrees(dyMeters);
+    if (!Number.isFinite(segLen) || segLen <= 1e-6) {
+      return particle;
+    }
+
+    const forward =
+      particle.dirX * (particle.segLon2 - particle.segLon1) +
+      particle.dirY * (particle.segLat2 - particle.segLat1) >= 0;
+
+    const dt = noisyDistance / segLen;
+    const nextT = clamp(particle.segT + (forward ? dt : -dt), 0, 1);
 
     return {
       ...particle,
-      x: particle.x + dLon,
-      y: particle.y + dLat,
+      segT: nextT,
+      x: lerp(particle.segLon1, particle.segLon2, nextT),
+      y: lerp(particle.segLat1, particle.segLat2, nextT),
     };
   });
 }

@@ -1,6 +1,7 @@
 import RNFS from "react-native-fs";
 
-type RoadPointEntry = [number, number, number, number]; // lon, lat, dx, dy
+type RoadPointEntry = [number, number, number, number, number, number];
+// [lon, lat, lon1, lat1, lon2, lat2]
 
 type RoadPointPool = {
   poolSize: number;
@@ -10,8 +11,10 @@ type RoadPointPool = {
 export type SampledRoadPoint = {
   lon: number;
   lat: number;
-  dx: number;
-  dy: number;
+  lon1: number;
+  lat1: number;
+  lon2: number;
+  lat2: number;
 };
 
 export class RoadTileSampler {
@@ -54,8 +57,8 @@ export class RoadTileSampler {
     const out: SampledRoadPoint[] = new Array(n);
 
     for (let i = 0; i < n; i++) {
-      const [lon, lat, dx, dy] = this.pickPoint();
-      out[i] = { lon, lat, dx, dy };
+      const [lon, lat, lon1, lat1, lon2, lat2] = this.pickPoint();
+      out[i] = { lon, lat, lon1, lat1, lon2, lat2 };
     }
 
     return out;

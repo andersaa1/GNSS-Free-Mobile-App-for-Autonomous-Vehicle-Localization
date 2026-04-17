@@ -3,8 +3,12 @@ import path from "path";
 
 const INPUT = path.resolve("src/assets/data/estonia-roads.json");
 const OUTDIR = path.resolve("src/assets/tiles/road_tiles");
-const OUTFILE = path.join(OUTDIR, "road_point_pool_z12.json");
+
+const POINT_POOL_FILE = path.join(OUTDIR, "road_point_pool_z12.json");
+const SEGMENT_TILE_DIR = path.join(OUTDIR, "road_segments_z12");
+
 const POOL_SIZE = 100000;
+const TILE_Z = 12;
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
@@ -23,6 +27,27 @@ function forEachLine(geom, cb) {
       if (Array.isArray(line)) cb(line);
     }
   }
+}
+
+function clampLat(lat) {
+  return Math.max(-85.05112878, Math.min(85.05112878, lat));
+}
+
+function lonLatToTile(lon, lat, z) {
+  const latClamped = clampLat(lat);
+  const n = 2 ** z;
+
+  const x = Math.floor(((lon + 180) / 360) * n);
+
+  const latRad = (latClamped * Math.PI) / 180;
+  const y = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
+  );
+
+  return {
+    x: Math.max(0, Math.min(n - 1, x)),
+    y: Math.max(0, Math.min(n - 1, y)),
+  };
 }
 
 function segmentLengthMeters(a, b) {
@@ -48,9 +73,9 @@ if (!roads || roads.type !== "FeatureCollection" || !Array.isArray(roads.feature
   throw new Error("Expected GeoJSON FeatureCollection");
 }
 
-// Store segments as compact arrays:
-// [lon1, lat1, lon2, lat2, len]
+// compact segment format: [lon1, lat1, lon2, lat2, lenMeters]
 const segments = [];
+const tileSegments = new Map();
 
 let featureCount = 0;
 let lineCount = 0;
@@ -89,8 +114,30 @@ for (const feature of roads.features) {
         continue;
       }
 
-      segments.push([a[0], a[1], b[0], b[1], len]);
+      const seg = [a[0], a[1], b[0], b[1], len];
+      segments.push(seg);
       segmentCount++;
+
+      // assign to tiles overlapped by segment bbox
+      const minLon = Math.min(a[0], b[0]);
+      const maxLon = Math.max(a[0], b[0]);
+      const minLat = Math.min(a[1], b[1]);
+      const maxLat = Math.max(a[1], b[1]);
+
+      const tMin = lonLatToTile(minLon, maxLat, TILE_Z);
+      const tMax = lonLatToTile(maxLon, minLat, TILE_Z);
+
+      for (let tx = tMin.x; tx <= tMax.x; tx++) {
+        for (let ty = tMin.y; ty <= tMax.y; ty++) {
+          const key = `${tx}_${ty}`;
+          let arr = tileSegments.get(key);
+          if (!arr) {
+            arr = [];
+            tileSegments.set(key, arr);
+          }
+          arr.push(seg);
+        }
+      }
     }
   });
 
@@ -108,7 +155,7 @@ if (!segments.length) {
 console.log("Valid segments:", segmentCount);
 console.log("Skipped segments:", skippedSegments);
 
-// Build prefix sums for weighted segment sampling
+// weighted sampling by segment length
 const cum = new Array(segments.length);
 let totalW = 0;
 
@@ -132,12 +179,12 @@ function pickWeightedSegment() {
   return segments[lo];
 }
 
-// Precompute road points
-// Store as compact arrays: [lon, lat, dx, dy]
+// compact point format: [lon, lat, lon1, lat1, lon2, lat2]
 const points = new Array(POOL_SIZE);
 
 for (let i = 0; i < POOL_SIZE; i++) {
   const seg = pickWeightedSegment();
+
   const lon1 = seg[0];
   const lat1 = seg[1];
   const lon2 = seg[2];
@@ -147,24 +194,35 @@ for (let i = 0; i < POOL_SIZE; i++) {
   const lon = lon1 + (lon2 - lon1) * t;
   const lat = lat1 + (lat2 - lat1) * t;
 
-  // local direction vector of the source segment
-  const dx = lon2 - lon1;
-  const dy = lat2 - lat1;
-
-  points[i] = [lon, lat, dx, dy];
+  points[i] = [lon, lat, lon1, lat1, lon2, lat2];
 
   if (i > 0 && i % 10000 === 0) {
     console.log(`Generated ${i}/${POOL_SIZE} road points`);
   }
 }
 
-const out = {
-  poolSize: POOL_SIZE,
-  points,
-};
-
 ensureDir(OUTDIR);
-fs.writeFileSync(OUTFILE, JSON.stringify(out));
+ensureDir(SEGMENT_TILE_DIR);
 
-console.log("Wrote:", OUTFILE);
+fs.writeFileSync(
+  POINT_POOL_FILE,
+  JSON.stringify({
+    poolSize: POOL_SIZE,
+    points,
+  })
+);
+
+for (const [key, segs] of tileSegments.entries()) {
+  const file = path.join(SEGMENT_TILE_DIR, `${key}.json`);
+  fs.writeFileSync(
+    file,
+    JSON.stringify({
+      segmentCount: segs.length,
+      segments: segs,
+    })
+  );
+}
+
+console.log("Wrote:", POINT_POOL_FILE);
+console.log("Wrote segment tiles:", tileSegments.size);
 console.log("Done.");

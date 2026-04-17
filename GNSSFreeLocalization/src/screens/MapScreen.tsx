@@ -24,6 +24,7 @@ import {
 } from "../services/navigation/distanceTracker";
 import { milestoneBoards } from "../services/map/milestoneBoards";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
+import { RoadSegmentIndex } from "../services/roads/roadSegmentIndex";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
 import type { MapStyleId } from "../app/loadBaseStyle";
 
@@ -110,20 +111,30 @@ export default function MapScreen({
       //);
     });
 
-    const unsubDistance = onDistanceChanged((sample) => { 
-      setParticles((prev) => {
-        if (!prev.length) return prev;
-        
-        const next = sampleParticles(prev, sample.deltaDistance, {
-          distanceNoiseStdM: 1.5,
+    const unsubDistance = onDistanceChanged((sample) => {
+      if (isSamplingRef.current) return;
+
+      const snapshot = particlesRef.current;
+      if (!snapshot.length) return;
+
+      if (!Number.isFinite(sample.deltaDistance) || sample.deltaDistance <= 0) return;
+
+      isSamplingRef.current = true;
+
+      try {
+        setParticles((prev) => {
+          if (!prev.length) return prev;
+
+          const next = sampleParticles(prev, sample.deltaDistance, {
+            distanceNoiseStdM: 1.5,
+          });
+
+          particlesRef.current = next;
+          return next;
         });
-
-        return next;
-      });
-
-      //console.log(
-        //`Δd=${sample.deltaDistance.toFixed(2)} m, total=${sample.totalDistance.toFixed(2)} m`
-      //);
+      } finally {
+        isSamplingRef.current = false;
+      }
     });
 
     startGps().catch(console.error);
@@ -163,11 +174,16 @@ export default function MapScreen({
 
   // Preloads indexes for speed
   const samplerRef = useRef(new RoadTileSampler());
+  const particlesRef = useRef<Particle[]>([]);
+  const isSamplingRef = useRef(false);
   useEffect(() => {
     samplerRef.current.init().catch((e) => {
       console.error("Road tile sampler init failed:", e);
     });
   }, []);
+  useEffect(() => {
+    particlesRef.current = particles;
+  }, [particles]);
 
   // Handler for the inital distribution step
   const generateParticles = async () => {
