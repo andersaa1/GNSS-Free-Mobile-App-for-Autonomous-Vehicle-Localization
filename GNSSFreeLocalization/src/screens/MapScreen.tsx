@@ -24,7 +24,7 @@ import {
 } from "../services/navigation/distanceTracker";
 import { milestoneBoards } from "../services/map/milestoneBoards";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
-import { RoadSegmentIndex } from "../services/roads/roadSegmentIndex";
+import { weightParticles } from "../services/particleFilter/weightParticles";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
 import type { MapStyleId } from "../app/loadBaseStyle";
 
@@ -103,6 +103,26 @@ export default function MapScreen({
       board.signs.forEach((sign, index) => {
         console.log(`${index + 1}. ${sign.destination} ${sign.distance} km`);
       });
+
+      setParticles((prev) => {
+        if (!prev.length) return prev;
+
+        const next = weightParticles(prev, board, {
+          distanceSigmaM: 20,
+          minLikelihood: 1e-6,
+          backwardsPenalty: 0.15,
+          exactBoardMatchBonus: 1.0,
+        });
+
+        particlesRef.current = next;
+
+        const best = next.reduce((a, b) => (a.weight >= b.weight ? a : b));
+        console.log(
+          `Weighting finished. Best particle=${best.id}, weight=${best.weight.toFixed(6)}`
+        );
+
+        return next;
+      });
     });
 
     const unsubSpeed = onSpeedChanged((sample) => {
@@ -113,9 +133,6 @@ export default function MapScreen({
 
     const unsubDistance = onDistanceChanged((sample) => {
       if (isSamplingRef.current) return;
-
-      const snapshot = particlesRef.current;
-      if (!snapshot.length) return;
 
       if (!Number.isFinite(sample.deltaDistance) || sample.deltaDistance <= 0) return;
 
