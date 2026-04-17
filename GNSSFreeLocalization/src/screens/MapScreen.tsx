@@ -3,9 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import Map from '../components/Map';
 import SettingsButton from '../components/SettingsButton';
 import SettingsOverlay from '../components/SettingsOverlay';
+
 import type { Particle } from "../services/particleFilter/types";
 import { createInitialDistribution } from "../services/particleFilter/initialDistribution";
 import { sampleParticles } from "../services/particleFilter/sampleParticles";
+import { RoadTileSampler } from "../services/roads/roadTileSampler";
+import { weightParticles } from "../services/particleFilter/weightParticles";
+import { resampleParticles } from "../services/particleFilter/resampleParticles";
+
 import { startGps, stopGps } from "../services/sensors/gps";
 import {
   onMilestoneBoardDetected,
@@ -22,9 +27,8 @@ import {
   stopDistanceTracker,
   onDistanceChanged,
 } from "../services/navigation/distanceTracker";
+
 import { milestoneBoards } from "../services/map/milestoneBoards";
-import { RoadTileSampler } from "../services/roads/roadTileSampler";
-import { weightParticles } from "../services/particleFilter/weightParticles";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
 import type { MapStyleId } from "../app/loadBaseStyle";
 
@@ -107,21 +111,26 @@ export default function MapScreen({
       setParticles((prev) => {
         if (!prev.length) return prev;
 
-        const next = weightParticles(prev, board, {
+        const weighted = weightParticles(prev, board, {
           distanceSigmaM: 20,
           minLikelihood: 1e-6,
           backwardsPenalty: 0.15,
           exactBoardMatchBonus: 1.0,
         });
 
-        particlesRef.current = next;
+        const resampled = resampleParticles(weighted, {
+          jitterPositionStd: 0.75,
+          keepWeightsUniform: true,
+        });
 
-        const best = next.reduce((a, b) => (a.weight >= b.weight ? a : b));
+        particlesRef.current = resampled;
+
+        const best = weighted.reduce((a, b) => (a.weight >= b.weight ? a : b));
         console.log(
           `Weighting finished. Best particle=${best.id}, weight=${best.weight.toFixed(6)}`
         );
 
-        return next;
+        return resampled;
       });
     });
 
