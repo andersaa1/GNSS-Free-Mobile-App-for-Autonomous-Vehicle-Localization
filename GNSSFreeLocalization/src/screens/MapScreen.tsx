@@ -151,8 +151,9 @@ export default function MapScreen({
         setParticles((prev) => {
           if (!prev.length) return prev;
 
-          const next = sampleParticles(prev, sample.deltaDistance, {
-            distanceNoiseStdM: 1.5,
+          const next = sampleParticles(prev, sample.deltaDistance, samplerRef.current, {
+            distanceNoiseStdM: 0.2,
+            maxTransitionsPerStep: 8,
           });
 
           particlesRef.current = next;
