@@ -227,10 +227,6 @@ export class RoadTileSampler {
     }
 
     if (!candidates.length) {
-      console.log("no connected segment found", {
-        exit: [exitLon, exitLat],
-        current: [current.lon1, current.lat1, current.lon2, current.lat2],
-      });
       return null;
     }
 

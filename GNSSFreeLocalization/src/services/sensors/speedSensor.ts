@@ -1,3 +1,6 @@
+import { onGpsFix, type GpsFix } from "./gps";
+import { distanceMeters } from "../../utils/geo";
+
 export type Speed = {
     speed: number; // speed in m/s
     timestamp: number;
@@ -8,10 +11,11 @@ type SpeedListenter = (speed: Speed) => void;
 const listeners = new Set<SpeedListenter>();
 
 let running = false;
-let intervalId: ReturnType<typeof setInterval> | null = null;
+let unsubscribeFromGps: (() => void) | null = null;
 
-// Mock state
 let currentSpeed = 0;
+let lastGpsFix: GpsFix | null = null;
+let lastPrintTime = 0;
 
 function emit(speed: Speed) {
     for (const listener of listeners) {
@@ -32,35 +36,69 @@ export function getCurrentSpeed(): number {
   return currentSpeed;
 }
 
-// Starts the mock speed sensor
-export function startSpeedSensor(updateHz = 2): void {
-    if (running) return;
+// Starts the speed sensor by listening to gps fixes
+export function startSpeedSensor(printIntervalSeconds = 2): void {
+  if (running) return;
 
-    running = true;
-    const interval = 1000 / updateHz;
+  running = true;
 
-    intervalId = setInterval(() => {
-        // small random variation between 0 and -8 m/s
-        const nextSpeed = Math.max(
-            0,
-            Math.min(8, currentSpeed + (Math.random() - 0.5) * 1.2)
-        );
+  unsubscribeFromGps = onGpsFix((currentGpsFix) => {
+    if (!lastGpsFix) {
+      lastGpsFix = currentGpsFix;
+      return;
+    }
 
-        currentSpeed = nextSpeed;
+    const deltaSeconds =
+      (currentGpsFix.timestamp - lastGpsFix.timestamp) / 1000;
 
-        emit({
-            speed: currentSpeed,
-            timestamp: Date.now(),
-        });
-    }, interval);
+    if (deltaSeconds <= 0) {
+      lastGpsFix = currentGpsFix;
+      return;
+    }
+
+    const distance = distanceMeters(
+      lastGpsFix.lat,
+      lastGpsFix.lon,
+      currentGpsFix.lat,
+      currentGpsFix.lon
+    );
+
+    currentSpeed = distance / deltaSeconds;
+
+    const speedSample: Speed = {
+      speed: currentSpeed,
+      timestamp: currentGpsFix.timestamp,
+    };
+
+    emit(speedSample);
+
+    if (
+      currentGpsFix.timestamp - lastPrintTime >=
+      printIntervalSeconds * 1000
+    ) {
+      console.log(
+        `Current speed: ${currentSpeed.toFixed(2)} m/s (${(
+          currentSpeed * 3.6
+        ).toFixed(2)} km/h)`
+      );
+
+      lastPrintTime = currentGpsFix.timestamp;
+    }
+
+    lastGpsFix = currentGpsFix;
+  });
 }
 
 // Stops the speed sensor
 export function stopSpeedSensor(): void {
-    running = false;
+  running = false;
 
-    if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-    }
+  if (unsubscribeFromGps) {
+    unsubscribeFromGps();
+    unsubscribeFromGps = null;
+  }
+
+  currentSpeed = 0;
+  lastGpsFix = null;
+  lastPrintTime = 0;
 }

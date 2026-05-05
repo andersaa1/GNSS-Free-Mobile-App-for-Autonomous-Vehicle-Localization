@@ -17,11 +17,10 @@ import {
   startCameraSensor,
   stopCameraSensor,
 } from "../services/sensors/cameraSensor";
-import { 
-  onSpeedChanged,
+import {
   startSpeedSensor,
   stopSpeedSensor,
- } from "../services/sensors/speedSensor"; 
+} from "../services/sensors/speedSensor";
 import {
   startDistanceTracker,
   stopDistanceTracker,
@@ -134,16 +133,12 @@ export default function MapScreen({
       });
     });
 
-    const unsubSpeed = onSpeedChanged((sample) => {
-      //console.log(
-        //`Speed: ${sample.speed.toFixed(2)} m/s at ${new Date(sample.timestamp).toISOString()}`
-      //);
-    });
-
     const unsubDistance = onDistanceChanged((sample) => {
       if (isSamplingRef.current) return;
 
-      if (!Number.isFinite(sample.deltaDistance) || sample.deltaDistance <= 0) return;
+      if (!Number.isFinite(sample.deltaDistance) || sample.deltaDistance <= 0) {
+        return;
+      }
 
       isSamplingRef.current = true;
 
@@ -151,10 +146,15 @@ export default function MapScreen({
         setParticles((prev) => {
           if (!prev.length) return prev;
 
-          const next = sampleParticles(prev, sample.deltaDistance, samplerRef.current, {
-            distanceNoiseStdM: 0.2,
-            maxTransitionsPerStep: 8,
-          });
+          const next = sampleParticles(
+            prev,
+            sample.deltaDistance,
+            samplerRef.current,
+            {
+              distanceNoiseStdM: 0.2,
+              maxTransitionsPerStep: 8,
+            }
+          );
 
           particlesRef.current = next;
           return next;
@@ -166,15 +166,16 @@ export default function MapScreen({
 
     startGps().catch(console.error);
     startCameraSensor(5);
-    startSpeedSensor(2);
+    startSpeedSensor(2); // prints every 2 seconds
     startDistanceTracker();
 
     return () => {
       unsubBoard();
-      unsubSpeed();
       stopCameraSensor();
+
       unsubDistance();
       stopDistanceTracker();
+
       stopSpeedSensor();
       stopGps();
     };
