@@ -14,7 +14,7 @@ export function onMilestoneBoardDetected(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-export function startCameraSensor(radius = 5): void {
+export function startCameraSensor(radius = 50): void {
   if (unsubscribeGps) return;
 
   unsubscribeGps = onGpsFix((fix) => {

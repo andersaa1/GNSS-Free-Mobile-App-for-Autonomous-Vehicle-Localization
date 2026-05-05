@@ -111,15 +111,17 @@ export default function MapScreen({
         if (!prev.length) return prev;
 
         const weighted = weightParticles(prev, board, {
-          distanceSigmaM: 20,
+          distanceSigmaM: 5000, // very high since the initial distribution is wide and there are low amount of particles
           minLikelihood: 1e-6,
           backwardsPenalty: 0.15,
           exactBoardMatchBonus: 1.0,
         });
 
         const resampled = resampleParticles(weighted, {
-          jitterPositionStd: 0.75,
+          jitterPositionStd: 100, // adds some noise
           keepWeightsUniform: true,
+          minDuplicateSpacingM: 1.5, // prevents particles from collapsing into the same position
+          
         });
 
         particlesRef.current = resampled;
