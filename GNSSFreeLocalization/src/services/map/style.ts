@@ -124,8 +124,6 @@ function scaleRoadWidth(expr: any, mult: number): any {
   // if the style uses a plain number width (common in Positron style)
   if (typeof expr === "number") return expr * mult;
 
-  const op = expr[0]; // "interpolate"
-
   // ["interpolate", ["linear"], ["zoom"], z0, v0, z1, v1, ...]
   const out = [...expr]; // makes a copy of the array
   for (let i = 4; i < out.length; i += 2) {

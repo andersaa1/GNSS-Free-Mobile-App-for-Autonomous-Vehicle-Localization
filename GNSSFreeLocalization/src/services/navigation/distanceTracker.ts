@@ -30,11 +30,6 @@ export function onDistanceChanged(listener: DistanceListener): () => void {
     };
 }
 
-export function resetDistanceTracker(): void {
-    totalDistance = 0;
-    last = null;
-}
-
 export function startDistanceTracker(): void {
     if (running) return;
     running = true;
@@ -76,5 +71,6 @@ export function stopDistanceTracker(): void {
         unsubscribeFromSpeed = null;
     }
 
+    totalDistance = 0;
     last = null;
 }

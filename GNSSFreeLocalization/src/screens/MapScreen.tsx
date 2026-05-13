@@ -6,12 +6,15 @@ import SettingsOverlay from '../components/SettingsOverlay';
 
 import type { Particle } from "../services/particleFilter/types";
 import { createInitialDistribution } from "../services/particleFilter/initialDistribution";
-import { sampleParticles } from "../services/particleFilter/sampleParticles";
+import {
+  sampleParticlesRouteMotion,
+  getTestRouteBearingDeg,
+} from "../services/particleFilter/sampleParticles";
 import { RoadTileSampler } from "../services/roads/roadTileSampler";
 import { weightParticles } from "../services/particleFilter/weightParticles";
 import { resampleParticles } from "../services/particleFilter/resampleParticles";
 
-import { startGps, stopGps } from "../services/sensors/gps";
+import { startGps, stopGps, onGpsFix, type GpsFix } from "../services/sensors/gps";
 import {
   onMilestoneBoardDetected,
   startCameraSensor,
@@ -30,6 +33,130 @@ import {
 import { milestoneBoards } from "../services/map/milestoneBoards";
 import { buildStyleWithRoadOverrides } from "../services/map/style";
 import type { MapStyleId } from "../app/loadBaseStyle";
+
+import { distanceMeters } from "../utils/geo";
+
+type ExperimentDirection = "forward" | "backward";
+
+const EXPERIMENT_CONFIG = {
+  runId: "backward_real_001",
+
+  direction: "backward" as ExperimentDirection,
+  particleCount: 500,
+
+  summaryLogIntervalMs: 2000,
+  particleSnapshotIntervalMs: 30000,
+};
+
+function estimateParticlePosition(particles: Particle[]): {
+  lat: number;
+  lon: number;
+} | null {
+  if (!particles.length) return null;
+
+  let weightSum = 0;
+  let latSum = 0;
+  let lonSum = 0;
+
+  for (const particle of particles) {
+    const weight =
+      Number.isFinite(particle.weight) && particle.weight > 0
+        ? particle.weight
+        : 0;
+
+    weightSum += weight;
+    latSum += particle.y * weight;
+    lonSum += particle.x * weight;
+  }
+
+  // If weights are invalid for any reason, fall back to plain average.
+  if (!Number.isFinite(weightSum) || weightSum <= 1e-12) {
+    const plainLat =
+      particles.reduce((sum, particle) => sum + particle.y, 0) /
+      particles.length;
+
+    const plainLon =
+      particles.reduce((sum, particle) => sum + particle.x, 0) /
+      particles.length;
+
+    return {
+      lat: plainLat,
+      lon: plainLon,
+    };
+  }
+
+  return {
+    lat: latSum / weightSum,
+    lon: lonSum / weightSum,
+  };
+}
+
+function calculatePositionErrorM(
+  actual: GpsFix | null,
+  estimate: { lat: number; lon: number } | null
+): number | null {
+  if (!actual || !estimate) return null;
+
+  return distanceMeters(
+    actual.lat,
+    actual.lon,
+    estimate.lat,
+    estimate.lon
+  );
+}
+
+function logExperimentEvent(eventName: string, payload: Record<string, unknown>) {
+  console.log(
+    `PF_EVENT ${JSON.stringify({
+      eventName,
+      runId: EXPERIMENT_CONFIG.runId,
+      direction: EXPERIMENT_CONFIG.direction,
+      configuredParticleCount: EXPERIMENT_CONFIG.particleCount,
+      timestamp: Date.now(),
+      ...payload,
+    })}`
+  );
+}
+
+function logParticleSnapshot(
+  snapshotType: string,
+  particles: Particle[],
+  actualGps: GpsFix | null,
+  extra?: Record<string, unknown>
+) {
+  const estimate = estimateParticlePosition(particles);
+  const errorM = calculatePositionErrorM(actualGps, estimate);
+
+  console.log(
+    `PF_SNAPSHOT ${JSON.stringify({
+      runId: EXPERIMENT_CONFIG.runId,
+      direction: EXPERIMENT_CONFIG.direction,
+      snapshotType,
+      timestamp: Date.now(),
+
+      actualLat: actualGps?.lat ?? null,
+      actualLon: actualGps?.lon ?? null,
+
+      estimatedLat: estimate?.lat ?? null,
+      estimatedLon: estimate?.lon ?? null,
+      errorM,
+      errorKm: errorM === null ? null : errorM / 1000,
+
+      particleCount: particles.length,
+
+      particles: particles.map((particle) => ({
+        id: particle.id,
+        lat: particle.y,
+        lon: particle.x,
+        weight: particle.weight,
+        dirX: particle.dirX,
+        dirY: particle.dirY,
+      })),
+
+      ...extra,
+    })}`
+  );
+}
 
 export default function MapScreen({ 
   initialStyle,
@@ -68,6 +195,17 @@ export default function MapScreen({
     return buildStyleWithRoadOverrides(baseStyle, { roadColor, roadWidth });
   }, [baseStyle, showRoads, roadColor.r, roadColor.g, roadColor.b, roadWidth]);
 
+  // refs for logging and testing
+  const actualGpsRef = useRef<GpsFix | null>(null);
+  const experimentStartTimeRef = useRef<number | null>(null);
+  const lastSummaryLogTimeRef = useRef(0);
+  const lastParticleSnapshotTimeRef = useRef(0);
+
+  // Preloads indexes for speed
+  const samplerRef = useRef(new RoadTileSampler());
+  const particlesRef = useRef<Particle[]>([]);
+  const isSamplingRef = useRef(false);
+
   // Square for displaying milestone boards on the map
   const createSquarePolygon = (lon: number, lat: number, size = 0.0001) => {
     return [
@@ -101,6 +239,21 @@ export default function MapScreen({
 
   // Subscribes to the sensors
   useEffect(() => {
+    experimentStartTimeRef.current = Date.now();
+    logExperimentEvent("experiment_started", {
+      config: EXPERIMENT_CONFIG,
+    });
+
+    console.log(
+      `Test route bearing: ${getTestRouteBearingDeg(
+        EXPERIMENT_CONFIG.direction
+      ).toFixed(2)}°`
+    );
+
+    const unsubGps = onGpsFix((fix) => {
+      actualGpsRef.current = fix;
+    });
+
     const unsubBoard = onMilestoneBoardDetected((board) => {
       console.log(`Detected milestone board ${board.oid}`);
       board.signs.forEach((sign, index) => {
@@ -110,6 +263,29 @@ export default function MapScreen({
       setParticles((prev) => {
         if (!prev.length) return prev;
 
+        const actualGps = actualGpsRef.current;
+        const estimateBefore = estimateParticlePosition(prev);
+        const errorBeforeM = calculatePositionErrorM(actualGps, estimateBefore);
+
+        logExperimentEvent("milestone_detected", {
+          milestoneOid: board.oid,
+          milestoneLat: board.lat,
+          milestoneLon: board.lon,
+          signs: board.signs,
+
+          actualLat: actualGps?.lat ?? null,
+          actualLon: actualGps?.lon ?? null,
+
+          estimatedLatBefore: estimateBefore?.lat ?? null,
+          estimatedLonBefore: estimateBefore?.lon ?? null,
+          errorBeforeM,
+          errorBeforeKm: errorBeforeM === null ? null : errorBeforeM / 1000,
+        })
+
+        logParticleSnapshot("before_weighting", prev, actualGps, {
+          milestoneOid: board.oid,
+        });
+
         const weighted = weightParticles(prev, board, {
           distanceSigmaM: 5000, // very high since the initial distribution is wide and there are low amount of particles
           minLikelihood: 1e-6,
@@ -117,20 +293,58 @@ export default function MapScreen({
           exactBoardMatchBonus: 1.0,
         });
 
+        const best = weighted.reduce((a, b) => (a.weight >= b.weight ? a : b));
+        const estimateAfterWeighting = estimateParticlePosition(weighted);
+        const errorAfterWeightingM = calculatePositionErrorM(actualGps, estimateAfterWeighting);
+
+        logExperimentEvent("weighting_finished", {
+          milestoneOid: board.oid,
+
+          bestParticleId: best.id,
+          bestParticleLat: best.y,
+          bestParticleLon: best.x,
+          bestParticleWeight: best.weight,
+
+          estimatedLatAfterWeighting: estimateAfterWeighting?.lat ?? null,
+          estimatedLonAfterWeighting: estimateAfterWeighting?.lon ?? null,
+          errorAfterWeightingM,
+          errorAfterWeightingKm: errorAfterWeightingM === null ? null : errorAfterWeightingM / 1000,
+        });
+
+        logParticleSnapshot("after_weighting", weighted, actualGps, {
+          milestoneOid: board.oid,
+          bestParticleId: best.id,
+          bestParticleWeight: best.weight,
+        });
+
         const resampled = resampleParticles(weighted, {
           jitterPositionStd: 100, // adds some noise
           keepWeightsUniform: true,
           minDuplicateSpacingM: 1.5, // prevents particles from collapsing into the same position
-          
+        });
+
+        const estimateAfterResampling = estimateParticlePosition(resampled);
+        const errorAfterResamplingM = calculatePositionErrorM(actualGps, estimateAfterResampling);
+
+        logExperimentEvent("resampling_finished", {
+          milestoneOid: board.oid,
+
+          estimatedLatAfterResampling: estimateAfterResampling?.lat ?? null,
+          estimatedLonAfterResampling: estimateAfterResampling?.lon ?? null,
+          errorAfterResamplingM,
+          errorAfterResamplingKm: errorAfterResamplingM === null ? null : errorAfterResamplingM / 1000,
+
+          correctionM:
+            errorBeforeM !== null && errorAfterResamplingM !== null
+              ? errorBeforeM - errorAfterResamplingM
+              : null,
+        });
+
+        logParticleSnapshot("after_resampling", resampled, actualGps, {
+          milestoneOid: board.oid,
         });
 
         particlesRef.current = resampled;
-
-        const best = weighted.reduce((a, b) => (a.weight >= b.weight ? a : b));
-        console.log(
-          `Weighting finished. Best particle=${best.id}, weight=${best.weight.toFixed(6)}`
-        );
-
         return resampled;
       });
     });
@@ -148,17 +362,68 @@ export default function MapScreen({
         setParticles((prev) => {
           if (!prev.length) return prev;
 
-          const next = sampleParticles(
-            prev,
-            sample.deltaDistance,
-            samplerRef.current,
-            {
-              distanceNoiseStdM: 0.2,
-              maxTransitionsPerStep: 8,
-            }
-          );
+          const next = sampleParticlesRouteMotion(prev, sample.deltaDistance, {
+            distanceNoiseStdM: 2.0, // adds noise to the distance measurement
+            headingNoiseDeg: 5, // adds noise to the heading
+            direction: EXPERIMENT_CONFIG.direction,
+          });
 
           particlesRef.current = next;
+
+          const now = Date.now();
+          const actualGps = actualGpsRef.current;
+          const estimate = estimateParticlePosition(next);
+          const errorM = calculatePositionErrorM(actualGps, estimate);
+          const experimentStartTime = experimentStartTimeRef.current ?? now;
+          const timeSeconds = (now - experimentStartTime) / 1000;
+
+          if (
+            now - lastSummaryLogTimeRef.current >=
+            EXPERIMENT_CONFIG.summaryLogIntervalMs
+          ) {
+            lastSummaryLogTimeRef.current = now;
+
+            console.log(
+              `PF_SUMMARY ${JSON.stringify({
+                runId: EXPERIMENT_CONFIG.runId,
+                direction: EXPERIMENT_CONFIG.direction,
+                timestamp: now,
+                timeSeconds,
+
+                actualLat: actualGps?.lat ?? null,
+                actualLon: actualGps?.lon ?? null,
+
+                estimatedLat: estimate?.lat ?? null,
+                estimatedLon: estimate?.lon ?? null,
+
+                errorM,
+                errorKm: errorM === null ? null : errorM / 1000,
+
+                speedMs: sample.speed,
+                speedKmh: sample.speed * 3.6,
+                deltaDistanceM: sample.deltaDistance,
+                totalDistanceM: sample.totalDistance,
+
+                particleCount: next.length,
+              })}`
+            );
+          }
+
+          if (
+            now - lastParticleSnapshotTimeRef.current >=
+            EXPERIMENT_CONFIG.particleSnapshotIntervalMs
+          ) {
+            lastParticleSnapshotTimeRef.current = now;
+
+            logParticleSnapshot("regular", next, actualGps, {
+              timeSeconds,
+              speedMs: sample.speed,
+              speedKmh: sample.speed * 3.6,
+              deltaDistanceM: sample.deltaDistance,
+              totalDistanceM: sample.totalDistance,
+            });
+          }
+
           return next;
         });
       } finally {
@@ -167,11 +432,16 @@ export default function MapScreen({
     });
 
     startGps().catch(console.error);
-    startCameraSensor(5);
-    startSpeedSensor(2); // prints every 2 seconds
+    startCameraSensor(50);
+
+    startSpeedSensor();
+
     startDistanceTracker();
 
     return () => {
+      logExperimentEvent("experiment_stopped", {});
+      unsubGps();
+
       unsubBoard();
       stopCameraSensor();
 
@@ -202,10 +472,6 @@ export default function MapScreen({
     };
   }, [particles]);
 
-  // Preloads indexes for speed
-  const samplerRef = useRef(new RoadTileSampler());
-  const particlesRef = useRef<Particle[]>([]);
-  const isSamplingRef = useRef(false);
   useEffect(() => {
     samplerRef.current.init().catch((e) => {
       console.error("Road tile sampler init failed:", e);
@@ -233,6 +499,21 @@ export default function MapScreen({
       const t1 = Date.now();
       console.log(`Initial distribution took ${t1 - t0} ms`);
 
+      logExperimentEvent("initial_distribution_completed", {
+        particleCount: sampledParticles.length,
+        durationMs: t1 - t0,
+      });
+
+      logParticleSnapshot(
+        "initial_distribution",
+        sampledParticles,
+        actualGpsRef.current,
+        {
+          durationMs: t1 - t0,
+        }
+      );
+
+      particlesRef.current = sampledParticles;
       setParticles(sampledParticles);
     } catch (e) {
       console.error("Initial distribution failed:", e);

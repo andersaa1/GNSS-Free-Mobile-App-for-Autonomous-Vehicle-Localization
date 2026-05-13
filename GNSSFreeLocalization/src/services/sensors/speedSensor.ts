@@ -2,33 +2,32 @@ import { onGpsFix, type GpsFix } from "./gps";
 import { distanceMeters } from "../../utils/geo";
 
 export type Speed = {
-    speed: number; // speed in m/s
-    timestamp: number;
-}
+  speed: number; // speed in m/s
+  timestamp: number;
+};
 
-type SpeedListenter = (speed: Speed) => void;
+type SpeedListener = (speed: Speed) => void;
 
-const listeners = new Set<SpeedListenter>();
+const listeners = new Set<SpeedListener>();
 
 let running = false;
 let unsubscribeFromGps: (() => void) | null = null;
 
 let currentSpeed = 0;
 let lastGpsFix: GpsFix | null = null;
-let lastPrintTime = 0;
 
 function emit(speed: Speed) {
-    for (const listener of listeners) {
-        listener(speed)
-    }
+  for (const listener of listeners) {
+    listener(speed);
+  }
 }
 
-// Subscribe to speed updates and returns an unsubscribe function
-export function onSpeedChanged(listener: SpeedListenter): () => void {
-    listeners.add(listener);
-    return () => {
-        listeners.delete(listener);
-    };
+// Subscribe to speed updates and return an unsubscribe function
+export function onSpeedChanged(listener: SpeedListener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 // Returns the most recent speed value
@@ -36,10 +35,9 @@ export function getCurrentSpeed(): number {
   return currentSpeed;
 }
 
-// Starts the speed sensor by listening to gps fixes
-export function startSpeedSensor(printIntervalSeconds = 2): void {
+// Starts the speed sensor
+export function startSpeedSensor(): void {
   if (running) return;
-
   running = true;
 
   unsubscribeFromGps = onGpsFix((currentGpsFix) => {
@@ -72,19 +70,6 @@ export function startSpeedSensor(printIntervalSeconds = 2): void {
 
     emit(speedSample);
 
-    if (
-      currentGpsFix.timestamp - lastPrintTime >=
-      printIntervalSeconds * 1000
-    ) {
-      console.log(
-        `Current speed: ${currentSpeed.toFixed(2)} m/s (${(
-          currentSpeed * 3.6
-        ).toFixed(2)} km/h)`
-      );
-
-      lastPrintTime = currentGpsFix.timestamp;
-    }
-
     lastGpsFix = currentGpsFix;
   });
 }
@@ -100,5 +85,4 @@ export function stopSpeedSensor(): void {
 
   currentSpeed = 0;
   lastGpsFix = null;
-  lastPrintTime = 0;
 }

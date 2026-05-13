@@ -188,16 +188,4 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
   },
-  radioRow: {
-    flexDirection: "row",
-    marginTop: 8,
-    marginBottom: 8,
-    justifyContent: 'space-between'
-  },
-  radioItem: {
-    
-  },
-  radioText: {
-    fontSize: 13,
-  }
 });

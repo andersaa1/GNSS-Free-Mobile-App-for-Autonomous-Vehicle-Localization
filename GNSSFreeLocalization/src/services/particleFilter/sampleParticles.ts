@@ -1,10 +1,4 @@
 import type { Particle } from "./types";
-import { RoadTileSampler } from "../roads/roadTileSampler";
-
-export type SampleParticlesOptions = {
-  distanceNoiseStdM?: number;
-  maxTransitionsPerStep?: number;
-};
 
 function gaussianRandom(mean = 0, std = 1): number {
   const u1 = Math.max(Math.random(), 1e-12);
@@ -14,157 +8,122 @@ function gaussianRandom(mean = 0, std = 1): number {
   return mean + z0 * std;
 }
 
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, v));
+export type RouteMotionOptions = {
+  distanceNoiseStdM?: number;
+  headingNoiseDeg?: number;
+  direction?: "forward" | "backward";
+};
+
+type Coordinate = {
+  lat: number;
+  lon: number;
+};
+
+const TEST_ROUTE_START: Coordinate = {
+  lat: 58.41080004416583,
+  lon: 26.639977828941134,
+};
+
+const TEST_ROUTE_END: Coordinate = {
+  lat: 58.656549087321984,
+  lon: 26.00953510482076,
+};
+
+function degToRad(deg: number): number {
+  return (deg * Math.PI) / 180;
 }
 
-function segmentLengthMeters(
-  lon1: number,
-  lat1: number,
-  lon2: number,
-  lat2: number
-): number {
-  const meanLatRad = (((lat1 + lat2) * 0.5) * Math.PI) / 180;
+function radToDeg(rad: number): number {
+  return (rad * 180) / Math.PI;
+}
+
+function calculateBearingRad(from: Coordinate, to: Coordinate): number {
+  const lat1 = degToRad(from.lat);
+  const lat2 = degToRad(to.lat);
+  const deltaLon = degToRad(to.lon - from.lon);
+
+  const y = Math.sin(deltaLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+
+  return Math.atan2(y, x);
+}
+
+function moveByBearing(
+  lon: number,
+  lat: number,
+  distanceM: number,
+  bearingRad: number
+): { lon: number; lat: number } {
+  const meanLatRad = degToRad(lat);
+
   const metersPerDegLat = 111320;
   const metersPerDegLon = 111320 * Math.cos(meanLatRad);
 
-  const dx = (lon2 - lon1) * metersPerDegLon;
-  const dy = (lat2 - lat1) * metersPerDegLat;
-
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function normalize(dx: number, dy: number): { x: number; y: number } {
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (!Number.isFinite(len) || len <= 1e-12) {
-    return { x: 1, y: 0 };
-  }
-  return { x: dx / len, y: dy / len };
-}
-
-function moveParticleAcrossSegments(
-  particle: Particle,
-  distanceM: number,
-  sampler: RoadTileSampler,
-  maxTransitionsPerStep: number
-): Particle {
-  let segLon1 = particle.segLon1;
-  let segLat1 = particle.segLat1;
-  let segLon2 = particle.segLon2;
-  let segLat2 = particle.segLat2;
-  let segT = particle.segT;
-
-  const forward =
-    particle.dirX * (particle.segLon2 - particle.segLon1) +
-      particle.dirY * (particle.segLat2 - particle.segLat1) >=
-    0;
-
-  let remaining = Math.max(0, distanceM);
-  let transitions = 0;
-
-  while (remaining > 1e-6) {
-    const segLen = segmentLengthMeters(segLon1, segLat1, segLon2, segLat2);
-    if (!Number.isFinite(segLen) || segLen <= 1e-6) {
-      break;
-    }
-
-    const available = forward ? (1 - segT) * segLen : segT * segLen;
-
-    if (remaining <= available + 1e-9) {
-      const dt = remaining / segLen;
-      segT = forward ? segT + dt : segT - dt;
-      segT = clamp(segT, 0, 1);
-      remaining = 0;
-      break;
-    }
-
-    remaining -= available;
-    const exitLon = forward ? segLon2 : segLon1;
-    const exitLat = forward ? segLat2 : segLat1;
-
-    if (transitions >= maxTransitionsPerStep) {
-      segT = forward ? 1 : 0;
-      remaining = 0;
-      break;
-    }
-
-    const next = sampler.pickConnectedSegment(
-      { lon1: segLon1, lat1: segLat1, lon2: segLon2, lat2: segLat2 },
-      exitLon,
-      exitLat
-    );
-
-    if (!next) {
-      segT = forward ? 1 : 0;
-      remaining = 0;
-      break;
-    }
-
-    if (forward) {
-      segLon1 = next.lon1;
-      segLat1 = next.lat1;
-      segLon2 = next.lon2;
-      segLat2 = next.lat2;
-      segT = 0;
-    } else {
-      // reverse the new segment so backward motion can continue away from the junction
-      segLon1 = next.lon2;
-      segLat1 = next.lat2;
-      segLon2 = next.lon1;
-      segLat2 = next.lat1;
-      segT = 1;
-    }
-
-    transitions++;
-  }
-
-  const unit = normalize(segLon2 - segLon1, segLat2 - segLat1);
-  const dirSign = forward ? 1 : -1;
+  const northM = Math.cos(bearingRad) * distanceM;
+  const eastM = Math.sin(bearingRad) * distanceM;
 
   return {
-    ...particle,
-    segLon1,
-    segLat1,
-    segLon2,
-    segLat2,
-    segT,
-    x: lerp(segLon1, segLon2, segT),
-    y: lerp(segLat1, segLat2, segT),
-    dirX: unit.x * dirSign,
-    dirY: unit.y * dirSign,
+    lon: lon + eastM / metersPerDegLon,
+    lat: lat + northM / metersPerDegLat,
   };
 }
 
-export function sampleParticles(
+export function sampleParticlesRouteMotion(
   particles: Particle[],
   deltaDistanceM: number,
-  sampler: RoadTileSampler,
-  options?: SampleParticlesOptions
+  options?: RouteMotionOptions
 ): Particle[] {
   if (!particles.length) return [];
-  if (!Number.isFinite(deltaDistanceM) || deltaDistanceM === 0) {
+  if (!Number.isFinite(deltaDistanceM) || deltaDistanceM <= 0) {
     return particles;
   }
 
   const distanceNoiseStdM = options?.distanceNoiseStdM ?? 1.5;
-  const maxTransitionsPerStep = options?.maxTransitionsPerStep ?? 8;
+  const headingNoiseDeg = options?.headingNoiseDeg ?? 3;
+  const direction = options?.direction ?? "forward";
+
+  const from = direction === "forward" ? TEST_ROUTE_START : TEST_ROUTE_END;
+  const to = direction === "forward" ? TEST_ROUTE_END : TEST_ROUTE_START;
+
+  const baseBearingRad = calculateBearingRad(from, to);
 
   return particles.map((particle) => {
-    const noisyDistance = Math.max(0, deltaDistanceM + gaussianRandom(0, distanceNoiseStdM));
-
-    if (!Number.isFinite(noisyDistance) || noisyDistance === 0) {
-      return particle;
-    }
-
-    return moveParticleAcrossSegments(
-      particle,
-      noisyDistance,
-      sampler,
-      maxTransitionsPerStep
+    const noisyDistance = Math.max(
+      0,
+      deltaDistanceM + gaussianRandom(0, distanceNoiseStdM)
     );
+
+    const noisyBearingRad =
+      baseBearingRad + degToRad(gaussianRandom(0, headingNoiseDeg));
+
+    const moved = moveByBearing(
+      particle.x,
+      particle.y,
+      noisyDistance,
+      noisyBearingRad
+    );
+
+    const dirX = Math.sin(noisyBearingRad);
+    const dirY = Math.cos(noisyBearingRad);
+
+    return {
+      ...particle,
+      x: moved.lon,
+      y: moved.lat,
+      dirX,
+      dirY,
+    };
   });
+}
+
+export function getTestRouteBearingDeg(
+  direction: "forward" | "backward" = "forward"
+): number {
+  const from = direction === "forward" ? TEST_ROUTE_START : TEST_ROUTE_END;
+  const to = direction === "forward" ? TEST_ROUTE_END : TEST_ROUTE_START;
+
+  const bearingRad = calculateBearingRad(from, to);
+  return (radToDeg(bearingRad) + 360) % 360;
 }
